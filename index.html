@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>エクセルみたいな表（二段構成＋タイトル）</title>
+  <title>エクセルみたいな表（二段構成＋個別操作）</title>
   <style>
     body { font-family: sans-serif; }
 
@@ -52,7 +52,7 @@
     </table>
   </div>
 
-  <!-- 2段目の前に入れたいタイトル -->
+  <!-- 2段目の前にタイトル -->
   <h2>2段目の前に入れたいタイトル</h2>
 
   <!-- 2段目の表 -->
@@ -67,8 +67,11 @@
     </table>
   </div>
 
-  <button onclick="addRow()">行を追加</button>
-  <button onclick="addColumn()">列を追加</button>
+  <!-- ボタン群（個別操作対応） -->
+  <button onclick="addRow1()">1段目に行追加</button>
+  <button onclick="addRow2()">2段目に行追加</button>
+  <button onclick="addColumn1()">1段目に列追加</button>
+  <button onclick="addColumn2()">2段目に列追加</button>
   <button onclick="saveTable()">保存</button>
   <button onclick="downloadCSV()">CSVとして保存</button>
   <label for="csvFileInput">CSVを読み込む</label>
@@ -81,35 +84,37 @@
       {tbody: document.getElementById("sheet2").getElementsByTagName("tbody")[0], header: document.getElementById("header2")}
     ];
 
-    function addRow() {
-      tables.forEach(t => {
-        let row = t.tbody.insertRow();
-        for (let i = 0; i < t.header.cells.length; i++) {
-          let cell = row.insertCell();
-          cell.contentEditable = "true";
-        }
-      });
+    // --- 行追加（個別操作） ---
+    function addRow1() { addRow(tables[0]); }
+    function addRow2() { addRow(tables[1]); }
+    function addRow(t) {
+      let row = t.tbody.insertRow();
+      for (let i = 0; i < t.header.cells.length; i++) {
+        let cell = row.insertCell();
+        cell.contentEditable = "true";
+      }
     }
 
-    function addColumn() {
-      tables.forEach(t => {
-        let colIndex = t.header.cells.length;
-        let colName = String.fromCharCode(65 + colIndex);
-        let th = document.createElement("th");
-        th.textContent = colName;
-        t.header.appendChild(th);
-        for (let i = 0; i < t.tbody.rows.length; i++) {
-          let cell = t.tbody.rows[i].insertCell();
-          cell.contentEditable = "true";
-        }
-      });
+    // --- 列追加（個別操作） ---
+    function addColumn1() { addColumn(tables[0]); }
+    function addColumn2() { addColumn(tables[1]); }
+    function addColumn(t) {
+      let colIndex = t.header.cells.length;
+      let th = document.createElement("th");
+      th.textContent = String.fromCharCode(65 + colIndex);
+      t.header.appendChild(th);
+      for (let i = 0; i < t.tbody.rows.length; i++) {
+        let cell = t.tbody.rows[i].insertCell();
+        cell.contentEditable = "true";
+      }
     }
 
+    // --- 保存 ---
     function saveTable() {
-      tables.forEach((t,i) => {
+      tables.forEach((t,i)=>{
         let data = [];
         for(let r=0;r<t.tbody.rows.length;r++){
-          let row = [];
+          let row=[];
           for(let c=0;c<t.tbody.rows[r].cells.length;c++){
             row.push(t.tbody.rows[r].cells[c].innerText);
           }
@@ -120,15 +125,16 @@
       alert("保存しました！");
     }
 
+    // --- 読み込み ---
     window.onload = function() {
       tables.forEach((t,i)=>{
         let data = JSON.parse(localStorage.getItem("myTable"+(i+1)) || "[]");
         if(data.length>0){
           t.tbody.innerHTML="";
           data.forEach(r=>{
-            let row = t.tbody.insertRow();
+            let row=t.tbody.insertRow();
             r.forEach(val=>{
-              let cell = row.insertCell();
+              let cell=row.insertCell();
               cell.contentEditable="true";
               cell.innerText=val;
             });
@@ -137,13 +143,14 @@
       });
     }
 
+    // --- CSV保存 ---
     function downloadCSV() {
       tables.forEach((t,i)=>{
-        let csv = [];
+        let csv=[];
         for(let r=0;r<t.tbody.rows.length;r++){
           let row=[];
           for(let c=0;c<t.tbody.rows[r].cells.length;c++){
-            row.push('"' + t.tbody.rows[r].cells[c].innerText.replace(/"/g,'""') + '"');
+            row.push('"'+t.tbody.rows[r].cells[c].innerText.replace(/"/g,'""')+'"');
           }
           csv.push(row.join(","));
         }
@@ -155,6 +162,7 @@
       });
     }
 
+    // --- CSV読み込み ---
     function uploadCSV(event) {
       let file=event.target.files[0];
       if(!file) return;
@@ -176,6 +184,7 @@
       reader.readAsText(file);
     }
 
+    // --- リセット ---
     function resetTable() {
       tables.forEach(t=>{
         t.tbody.innerHTML="<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
