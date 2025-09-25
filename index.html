@@ -11,7 +11,7 @@
     table {
       border-collapse: collapse;
       width: 100%;
-      max-width: 800px;
+      max-width: 1000px;
     }
     th, td {
       border: 1px solid #aaa;
@@ -28,24 +28,18 @@
     .buttons {
       margin-top: 15px;
     }
-    button {
+    button, label {
       margin-right: 10px;
       padding: 6px 12px;
+      cursor: pointer;
     }
     input[type="file"] {
       display: none;
     }
-    label {
-      padding: 6px 12px;
-      background: #eee;
-      border: 1px solid #aaa;
-      cursor: pointer;
-      margin-right: 10px;
-    }
   </style>
 </head>
 <body>
-  <h2>エクセルみたいな表（ブラウザ保存＋CSV入出力）</h2>
+  <h2>エクセルみたいな表（ブラウザ保存＋CSV入出力＋列追加）</h2>
   <table id="excelTable">
     <thead>
       <tr>
@@ -73,6 +67,7 @@
 
   <div class="buttons">
     <button onclick="addRow()">行を追加</button>
+    <button onclick="addColumn()">列を追加</button>
     <button onclick="saveTable()">保存</button>
     <button onclick="exportCSV()">CSVとして保存</button>
     <label for="csvFile">CSVを読み込む</label>
@@ -86,8 +81,25 @@
     // 行を追加
     function addRow() {
       const row = table.insertRow(-1);
-      for (let i = 0; i < 4; i++) {
+      const colCount = table.rows[0].cells.length;
+      for (let i = 0; i < colCount; i++) {
         const cell = row.insertCell(i);
+        cell.contentEditable = "true";
+      }
+    }
+
+    // 列を追加
+    function addColumn() {
+      const headerRow = table.rows[0];
+      const newIndex = headerRow.cells.length;
+      const colName = String.fromCharCode(65 + (newIndex % 26)) + (newIndex >= 26 ? Math.floor(newIndex / 26) : "");
+      const th = document.createElement("th");
+      th.innerText = colName;
+      headerRow.appendChild(th);
+
+      // 各行にセルを追加
+      for (let i = 1; i < table.rows.length; i++) {
+        const cell = table.rows[i].insertCell(-1);
         cell.contentEditable = "true";
       }
     }
@@ -103,17 +115,31 @@
         data.push(row);
       }
       localStorage.setItem("excelData", JSON.stringify(data));
+      localStorage.setItem("excelCols", table.rows[0].cells.length);
       alert("保存しました（ブラウザに保存）");
     }
 
     // 読み込み
     function loadTable() {
       const saved = localStorage.getItem("excelData");
+      const savedCols = localStorage.getItem("excelCols");
       if (saved) {
         const data = JSON.parse(saved);
-        for (let i = 1; i < table.rows.length; i++) {
-          table.deleteRow(1);
+
+        // 列数を調整
+        if (savedCols) {
+          const cols = parseInt(savedCols);
+          while (table.rows[0].cells.length < cols) {
+            addColumn();
+          }
         }
+
+        // 行を初期化
+        for (let i = table.rows.length - 1; i > 0; i--) {
+          table.deleteRow(i);
+        }
+
+        // データを反映
         data.forEach(rowData => {
           const row = table.insertRow(-1);
           rowData.forEach(cellData => {
@@ -154,7 +180,13 @@
       reader.onload = function(e) {
         const text = e.target.result;
         const rows = text.split(/\r?\n/).map(line => line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/));
-        
+
+        // ヘッダー行を調整
+        const maxCols = Math.max(...rows.map(r => r.length));
+        while (table.rows[0].cells.length < maxCols) {
+          addColumn();
+        }
+
         // 表を初期化（ヘッダー以外削除）
         for (let i = table.rows.length - 1; i > 0; i--) {
           table.deleteRow(i);
@@ -162,12 +194,12 @@
 
         // 行を追加して値を反映
         rows.forEach(rowData => {
-          if (rowData.length === 1 && rowData[0] === "") return; // 空行スキップ
+          if (rowData.length === 1 && rowData[0] === "") return;
           const row = table.insertRow(-1);
           rowData.forEach(cellData => {
             const cell = row.insertCell(-1);
             cell.contentEditable = "true";
-            cell.innerText = cellData.replace(/^"|"$/g, "").replace(/""/g, '"'); // CSVの " を解除
+            cell.innerText = cellData.replace(/^"|"$/g, "").replace(/""/g, '"');
           });
         });
       };
@@ -178,8 +210,12 @@
     function clearTable() {
       if (confirm("表をリセットしてもいいですか？（保存データも消えます）")) {
         localStorage.removeItem("excelData");
+        localStorage.removeItem("excelCols");
         for (let i = table.rows.length - 1; i > 0; i--) {
           table.deleteRow(i);
+        }
+        while (table.rows[0].cells.length > 4) {
+          table.rows[0].deleteCell(-1);
         }
         addRow();
         addRow();
