@@ -2,46 +2,33 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>エクセルみたいな表（二段構成＋個別操作）</title>
-  <h3>エクセルみたいな表（二段構成＋個別操作）</h3>
+  <title>エクセルみたいな表（二段構成＋各表サブタイトル）</title>
   <style>
-    body { font-family: sans-serif; }
-
-    .table-container {
-      display: block;
-      margin-bottom: 20px;
-    }
-
-    table { 
-      border-collapse: collapse; 
-      margin: 10px 0; 
-      width: 100%;
-    }
-    th, td { 
-      border: 1px solid #ccc; 
-      padding: 5px; 
-      min-width: 80px; 
-    }
+    body { font-family: sans-serif; margin: 20px; }
+    h1 { font-size: 2em; margin-bottom: 5px; }
+    .subtitle { font-size: 1em; color: #555; margin-top: 0; margin-bottom: 10px; }
+    .table-container { display: block; margin-bottom: 30px; }
+    table { border-collapse: collapse; margin: 10px 0; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 5px; min-width: 80px; }
     th { background: #eee; }
     td { background: #fcfcf5; }
-
     button, label[for="csvFileInput"] {
-      margin: 5px;
-      padding: 5px 10px;
-      border: 1px solid #888;
-      border-radius: 4px;
-      background: #f0f0f0;
-      cursor: pointer;
-      color: black;
-      text-decoration: none;
+      margin: 5px; padding: 5px 10px;
+      border: 1px solid #888; border-radius: 4px;
+      background: #f0f0f0; cursor: pointer;
+      color: black; text-decoration: none;
     }
-
     input[type="file"] { display: none; }
   </style>
 </head>
 <body>
+
+  <!-- ページ最上部タイトル -->
+  <h1>エクセルみたいな表</h1>
+
   <!-- 1段目の表 -->
-  <h2>エクセルみたいな表（1段目）</h2>
+  <h2>1段目の表</h2>
+  <p class="subtitle">1段目の表用サブタイトル</p>
   <div class="table-container">
     <table id="sheet1">
       <thead>
@@ -53,10 +40,9 @@
     </table>
   </div>
 
-  <!-- 2段目の前にタイトル -->
-  <h2>2段目の前に入れたいタイトル</h2>
-
   <!-- 2段目の表 -->
+  <h2>2段目の表</h2>
+  <p class="subtitle">2段目の表用サブタイトル</p>
   <div class="table-container">
     <table id="sheet2">
       <thead>
@@ -68,7 +54,7 @@
     </table>
   </div>
 
-  <!-- ボタン群（個別操作対応） -->
+  <!-- ボタン群 -->
   <button onclick="addRow1()">1段目に行追加</button>
   <button onclick="addRow2()">2段目に行追加</button>
   <button onclick="addColumn1()">1段目に列追加</button>
@@ -85,7 +71,6 @@
       {tbody: document.getElementById("sheet2").getElementsByTagName("tbody")[0], header: document.getElementById("header2")}
     ];
 
-    // --- 行追加（個別操作） ---
     function addRow1() { addRow(tables[0]); }
     function addRow2() { addRow(tables[1]); }
     function addRow(t) {
@@ -96,7 +81,6 @@
       }
     }
 
-    // --- 列追加（個別操作） ---
     function addColumn1() { addColumn(tables[0]); }
     function addColumn2() { addColumn(tables[1]); }
     function addColumn(t) {
@@ -110,7 +94,6 @@
       }
     }
 
-    // --- 保存 ---
     function saveTable() {
       tables.forEach((t,i)=>{
         let data = [];
@@ -126,72 +109,5 @@
       alert("保存しました！");
     }
 
-    // --- 読み込み ---
     window.onload = function() {
-      tables.forEach((t,i)=>{
-        let data = JSON.parse(localStorage.getItem("myTable"+(i+1)) || "[]");
-        if(data.length>0){
-          t.tbody.innerHTML="";
-          data.forEach(r=>{
-            let row=t.tbody.insertRow();
-            r.forEach(val=>{
-              let cell=row.insertCell();
-              cell.contentEditable="true";
-              cell.innerText=val;
-            });
-          });
-        }
-      });
-    }
-
-    // --- CSV保存 ---
-    function downloadCSV() {
-      tables.forEach((t,i)=>{
-        let csv=[];
-        for(let r=0;r<t.tbody.rows.length;r++){
-          let row=[];
-          for(let c=0;c<t.tbody.rows[r].cells.length;c++){
-            row.push('"'+t.tbody.rows[r].cells[c].innerText.replace(/"/g,'""')+'"');
-          }
-          csv.push(row.join(","));
-        }
-        let blob=new Blob([csv.join("\n")],{type:"text/csv"});
-        let link=document.createElement("a");
-        link.href=URL.createObjectURL(blob);
-        link.download="table"+(i+1)+".csv";
-        link.click();
-      });
-    }
-
-    // --- CSV読み込み ---
-    function uploadCSV(event) {
-      let file=event.target.files[0];
-      if(!file) return;
-      let reader=new FileReader();
-      reader.onload=function(e){
-        let rows=e.target.result.split("\n").map(r=>r.split(","));
-        tables.forEach(t=>{ t.tbody.innerHTML=""; });
-        rows.forEach(r=>{
-          tables.forEach(t=>{
-            let row=t.tbody.insertRow();
-            r.forEach(val=>{
-              let cell=row.insertCell();
-              cell.contentEditable="true";
-              cell.innerText=val.replace(/^"|"$/g,'').replace(/""/g,'"');
-            });
-          });
-        });
-      };
-      reader.readAsText(file);
-    }
-
-    // --- リセット ---
-    function resetTable() {
-      tables.forEach(t=>{
-        t.tbody.innerHTML="<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
-      });
-      tables.forEach((t,i)=>{ localStorage.removeItem("myTable"+(i+1)); });
-    }
-  </script>
-</body>
-</html>
+     
