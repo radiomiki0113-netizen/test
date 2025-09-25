@@ -2,13 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>エクセルみたいな表（二段表示＋ブラウザ保存＋CSV入出力＋列追加）</title>
+  <title>エクセルみたいな表（二段構成＋タイトル）</title>
   <style>
-    body {
-      font-family: sans-serif;
-    }
+    body { font-family: sans-serif; }
 
-    /* 表全体のスタイル */
     .table-container {
       display: block;
       margin-bottom: 20px;
@@ -27,7 +24,6 @@
     th { background: #eee; }
     td { background: #fcfcf5; }
 
-    /* ボタン用 */
     button, label[for="csvFileInput"] {
       margin: 5px;
       padding: 5px 10px;
@@ -39,52 +35,34 @@
       text-decoration: none;
     }
 
-    input[type="file"] {
-      display: none; /* 本来のファイル選択を隠す */
-    }
+    input[type="file"] { display: none; }
   </style>
 </head>
 <body>
-  <h2>エクセルみたいな表（二段表示）</h2>
-
+  <!-- 1段目の表 -->
+  <h2>エクセルみたいな表（1段目）</h2>
   <div class="table-container">
     <table id="sheet1">
       <thead>
-        <tr id="header1">
-          <th>A</th>
-          <th>B</th>
-          <th>C</th>
-          <th>D</th>
-        </tr>
+        <tr id="header1"><th>A</th><th>B</th><th>C</th><th>D</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td contenteditable="true"></td>
-          <td contenteditable="true"></td>
-          <td contenteditable="true"></td>
-          <td contenteditable="true"></td>
-        </tr>
+        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
       </tbody>
     </table>
   </div>
 
+  <!-- 2段目の前に入れたいタイトル -->
+  <h2>2段目の前に入れたいタイトル</h2>
+
+  <!-- 2段目の表 -->
   <div class="table-container">
     <table id="sheet2">
       <thead>
-        <tr id="header2">
-          <th>A</th>
-          <th>B</th>
-          <th>C</th>
-          <th>D</th>
-        </tr>
+        <tr id="header2"><th>A</th><th>B</th><th>C</th><th>D</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td contenteditable="true"></td>
-          <td contenteditable="true"></td>
-          <td contenteditable="true"></td>
-          <td contenteditable="true"></td>
-        </tr>
+        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
       </tbody>
     </table>
   </div>
@@ -93,147 +71,116 @@
   <button onclick="addColumn()">列を追加</button>
   <button onclick="saveTable()">保存</button>
   <button onclick="downloadCSV()">CSVとして保存</button>
-
   <label for="csvFileInput">CSVを読み込む</label>
   <input type="file" id="csvFileInput" accept=".csv" onchange="uploadCSV(event)">
-  
   <button onclick="resetTable()">リセット</button>
 
   <script>
-    const table1 = document.getElementById("sheet1").getElementsByTagName("tbody")[0];
-    const table2 = document.getElementById("sheet2").getElementsByTagName("tbody")[0];
-    const header1 = document.getElementById("header1");
-    const header2 = document.getElementById("header2");
+    const tables = [
+      {tbody: document.getElementById("sheet1").getElementsByTagName("tbody")[0], header: document.getElementById("header1")},
+      {tbody: document.getElementById("sheet2").getElementsByTagName("tbody")[0], header: document.getElementById("header2")}
+    ];
 
-    // 行追加
     function addRow() {
-      let row1 = table1.insertRow();
-      let row2 = table2.insertRow();
-      for (let i = 0; i < header1.cells.length; i++) {
-        let cell1 = row1.insertCell();
-        let cell2 = row2.insertCell();
-        cell1.contentEditable = "true";
-        cell2.contentEditable = "true";
-      }
-    }
-
-    // 列追加
-    function addColumn() {
-      let colIndex = header1.cells.length;
-      let colName = String.fromCharCode(65 + colIndex); // A=65
-      let th1 = document.createElement("th");
-      let th2 = document.createElement("th");
-      th1.textContent = colName;
-      th2.textContent = colName;
-      header1.appendChild(th1);
-      header2.appendChild(th2);
-
-      for (let i = 0; i < table1.rows.length; i++) {
-        let cell1 = table1.rows[i].insertCell();
-        let cell2 = table2.rows[i].insertCell();
-        cell1.contentEditable = "true";
-        cell2.contentEditable = "true";
-      }
-    }
-
-    // 保存（localStorage）
-    function saveTable() {
-      let data1 = [];
-      let data2 = [];
-      for (let r = 0; r < table1.rows.length; r++) {
-        let row1 = [];
-        let row2 = [];
-        for (let c = 0; c < table1.rows[r].cells.length; c++) {
-          row1.push(table1.rows[r].cells[c].innerText);
-          row2.push(table2.rows[r].cells[c].innerText);
+      tables.forEach(t => {
+        let row = t.tbody.insertRow();
+        for (let i = 0; i < t.header.cells.length; i++) {
+          let cell = row.insertCell();
+          cell.contentEditable = "true";
         }
-        data1.push(row1);
-        data2.push(row2);
-      }
-      localStorage.setItem("myTable1", JSON.stringify(data1));
-      localStorage.setItem("myTable2", JSON.stringify(data2));
+      });
+    }
+
+    function addColumn() {
+      tables.forEach(t => {
+        let colIndex = t.header.cells.length;
+        let colName = String.fromCharCode(65 + colIndex);
+        let th = document.createElement("th");
+        th.textContent = colName;
+        t.header.appendChild(th);
+        for (let i = 0; i < t.tbody.rows.length; i++) {
+          let cell = t.tbody.rows[i].insertCell();
+          cell.contentEditable = "true";
+        }
+      });
+    }
+
+    function saveTable() {
+      tables.forEach((t,i) => {
+        let data = [];
+        for(let r=0;r<t.tbody.rows.length;r++){
+          let row = [];
+          for(let c=0;c<t.tbody.rows[r].cells.length;c++){
+            row.push(t.tbody.rows[r].cells[c].innerText);
+          }
+          data.push(row);
+        }
+        localStorage.setItem("myTable"+(i+1), JSON.stringify(data));
+      });
       alert("保存しました！");
     }
 
-    // 読み込み
     window.onload = function() {
-      let data1 = JSON.parse(localStorage.getItem("myTable1") || "[]");
-      let data2 = JSON.parse(localStorage.getItem("myTable2") || "[]");
-      if (data1.length > 0 && data2.length > 0) {
-        table1.innerHTML = "";
-        table2.innerHTML = "";
-        data1.forEach((r, index) => {
-          let row1 = table1.insertRow();
-          let row2 = table2.insertRow();
-          r.forEach((val, i) => {
-            let cell1 = row1.insertCell();
-            let cell2 = row2.insertCell();
-            cell1.contentEditable = "true";
-            cell2.contentEditable = "true";
-            cell1.innerText = val;
-            cell2.innerText = data2[index][i];
+      tables.forEach((t,i)=>{
+        let data = JSON.parse(localStorage.getItem("myTable"+(i+1)) || "[]");
+        if(data.length>0){
+          t.tbody.innerHTML="";
+          data.forEach(r=>{
+            let row = t.tbody.insertRow();
+            r.forEach(val=>{
+              let cell = row.insertCell();
+              cell.contentEditable="true";
+              cell.innerText=val;
+            });
           });
-        });
-      }
-    }
-
-    // CSV保存
-    function downloadCSV() {
-      let csv1 = [];
-      let csv2 = [];
-      for (let r = 0; r < table1.rows.length; r++) {
-        let row1 = [];
-        let row2 = [];
-        for (let c = 0; c < table1.rows[r].cells.length; c++) {
-          row1.push('"' + table1.rows[r].cells[c].innerText.replace(/"/g, '""') + '"');
-          row2.push('"' + table2.rows[r].cells[c].innerText.replace(/"/g, '""') + '"');
         }
-        csv1.push(row1.join(","));
-        csv2.push(row2.join(","));
-      }
-      let blob1 = new Blob([csv1.join("\n")], { type: "text/csv" });
-      let blob2 = new Blob([csv2.join("\n")], { type: "text/csv" });
-      let link1 = document.createElement("a");
-      let link2 = document.createElement("a");
-      link1.href = URL.createObjectURL(blob1);
-      link2.href = URL.createObjectURL(blob2);
-      link1.download = "table1.csv";
-      link2.download = "table2.csv";
-      link1.click();
-      link2.click();
+      });
     }
 
-    // CSV読み込み
+    function downloadCSV() {
+      tables.forEach((t,i)=>{
+        let csv = [];
+        for(let r=0;r<t.tbody.rows.length;r++){
+          let row=[];
+          for(let c=0;c<t.tbody.rows[r].cells.length;c++){
+            row.push('"' + t.tbody.rows[r].cells[c].innerText.replace(/"/g,'""') + '"');
+          }
+          csv.push(row.join(","));
+        }
+        let blob=new Blob([csv.join("\n")],{type:"text/csv"});
+        let link=document.createElement("a");
+        link.href=URL.createObjectURL(blob);
+        link.download="table"+(i+1)+".csv";
+        link.click();
+      });
+    }
+
     function uploadCSV(event) {
-      let file = event.target.files[0];
-      if (!file) return;
-      let reader = new FileReader();
-      reader.onload = function(e) {
-        let rows = e.target.result.split("\n").map(r => r.split(","));
-        table1.innerHTML = "";
-        table2.innerHTML = "";
-        rows.forEach(r => {
-          let row1 = table1.insertRow();
-          let row2 = table2.insertRow();
-          r.forEach(val => {
-            let cell1 = row1.insertCell();
-            let cell2 = row2.insertCell();
-            cell1.contentEditable = "true";
-            cell2.contentEditable = "true";
-            cell1.innerText = val.replace(/^"|"$/g, '').replace(/""/g, '"');
-            cell2.innerText = val.replace(/^"|"$/g, '').replace(/""/g, '"');
+      let file=event.target.files[0];
+      if(!file) return;
+      let reader=new FileReader();
+      reader.onload=function(e){
+        let rows=e.target.result.split("\n").map(r=>r.split(","));
+        tables.forEach(t=>{ t.tbody.innerHTML=""; });
+        rows.forEach(r=>{
+          tables.forEach(t=>{
+            let row=t.tbody.insertRow();
+            r.forEach(val=>{
+              let cell=row.insertCell();
+              cell.contentEditable="true";
+              cell.innerText=val.replace(/^"|"$/g,'').replace(/""/g,'"');
+            });
           });
         });
       };
       reader.readAsText(file);
     }
 
-    // リセット
     function resetTable() {
-      table1.innerHTML = "<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
-      table2.innerHTML = "<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
-      localStorage.removeItem("myTable1");
-      localStorage.removeItem("myTable2");
+      tables.forEach(t=>{
+        t.tbody.innerHTML="<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
+      });
+      tables.forEach((t,i)=>{ localStorage.removeItem("myTable"+(i+1)); });
     }
   </script>
 </body>
