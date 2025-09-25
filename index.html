@@ -10,17 +10,14 @@
 
     /* 表全体のスタイル */
     .table-container {
-      display: flex;
-      flex-wrap: wrap;       /* 幅が足りなければ下に折り返す */
-      gap: 50px;             /* テーブル間の間隔 */
+      display: block;
       margin-bottom: 20px;
     }
 
     table { 
       border-collapse: collapse; 
       margin: 10px 0; 
-      flex: 1 1 45%;         /* 横幅の最大45％まで表示して2列化 */
-      min-width: 300px;
+      width: 100%;
     }
     th, td { 
       border: 1px solid #ccc; 
@@ -31,19 +28,7 @@
     td { background: #fcfcf5; }
 
     /* ボタン用 */
-    button {
-      margin: 5px;
-      padding: 5px 10px;
-      border: 1px solid #888;
-      border-radius: 4px;
-      background: #f0f0f0;
-      cursor: pointer;
-      color: black;
-      text-decoration: none;
-    }
-
-    /* ラベル用（見た目ボタン） */
-    label[for="csvFileInput"] {
+    button, label[for="csvFileInput"] {
       margin: 5px;
       padding: 5px 10px;
       border: 1px solid #888;
@@ -63,9 +48,30 @@
   <h2>エクセルみたいな表（二段表示）</h2>
 
   <div class="table-container">
-    <table id="sheet">
+    <table id="sheet1">
       <thead>
-        <tr id="header">
+        <tr id="header1">
+          <th>A</th>
+          <th>B</th>
+          <th>C</th>
+          <th>D</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-container">
+    <table id="sheet2">
+      <thead>
+        <tr id="header2">
           <th>A</th>
           <th>B</th>
           <th>C</th>
@@ -94,57 +100,78 @@
   <button onclick="resetTable()">リセット</button>
 
   <script>
-    const table = document.getElementById("sheet").getElementsByTagName("tbody")[0];
-    const header = document.getElementById("header");
+    const table1 = document.getElementById("sheet1").getElementsByTagName("tbody")[0];
+    const table2 = document.getElementById("sheet2").getElementsByTagName("tbody")[0];
+    const header1 = document.getElementById("header1");
+    const header2 = document.getElementById("header2");
 
     // 行追加
     function addRow() {
-      let row = table.insertRow();
-      for (let i = 0; i < header.cells.length; i++) {
-        let cell = row.insertCell();
-        cell.contentEditable = "true";
+      let row1 = table1.insertRow();
+      let row2 = table2.insertRow();
+      for (let i = 0; i < header1.cells.length; i++) {
+        let cell1 = row1.insertCell();
+        let cell2 = row2.insertCell();
+        cell1.contentEditable = "true";
+        cell2.contentEditable = "true";
       }
     }
 
     // 列追加
     function addColumn() {
-      let colIndex = header.cells.length;
+      let colIndex = header1.cells.length;
       let colName = String.fromCharCode(65 + colIndex); // A=65
-      let th = document.createElement("th");
-      th.textContent = colName;
-      header.appendChild(th);
+      let th1 = document.createElement("th");
+      let th2 = document.createElement("th");
+      th1.textContent = colName;
+      th2.textContent = colName;
+      header1.appendChild(th1);
+      header2.appendChild(th2);
 
-      for (let i = 0; i < table.rows.length; i++) {
-        let cell = table.rows[i].insertCell();
-        cell.contentEditable = "true";
+      for (let i = 0; i < table1.rows.length; i++) {
+        let cell1 = table1.rows[i].insertCell();
+        let cell2 = table2.rows[i].insertCell();
+        cell1.contentEditable = "true";
+        cell2.contentEditable = "true";
       }
     }
 
     // 保存（localStorage）
     function saveTable() {
-      let data = [];
-      for (let r = 0; r < table.rows.length; r++) {
-        let row = [];
-        for (let c = 0; c < table.rows[r].cells.length; c++) {
-          row.push(table.rows[r].cells[c].innerText);
+      let data1 = [];
+      let data2 = [];
+      for (let r = 0; r < table1.rows.length; r++) {
+        let row1 = [];
+        let row2 = [];
+        for (let c = 0; c < table1.rows[r].cells.length; c++) {
+          row1.push(table1.rows[r].cells[c].innerText);
+          row2.push(table2.rows[r].cells[c].innerText);
         }
-        data.push(row);
+        data1.push(row1);
+        data2.push(row2);
       }
-      localStorage.setItem("myTable", JSON.stringify(data));
+      localStorage.setItem("myTable1", JSON.stringify(data1));
+      localStorage.setItem("myTable2", JSON.stringify(data2));
       alert("保存しました！");
     }
 
     // 読み込み
     window.onload = function() {
-      let data = JSON.parse(localStorage.getItem("myTable") || "[]");
-      if (data.length > 0) {
-        table.innerHTML = "";
-        data.forEach(r => {
-          let row = table.insertRow();
-          r.forEach(val => {
-            let cell = row.insertCell();
-            cell.contentEditable = "true";
-            cell.innerText = val;
+      let data1 = JSON.parse(localStorage.getItem("myTable1") || "[]");
+      let data2 = JSON.parse(localStorage.getItem("myTable2") || "[]");
+      if (data1.length > 0 && data2.length > 0) {
+        table1.innerHTML = "";
+        table2.innerHTML = "";
+        data1.forEach((r, index) => {
+          let row1 = table1.insertRow();
+          let row2 = table2.insertRow();
+          r.forEach((val, i) => {
+            let cell1 = row1.insertCell();
+            let cell2 = row2.insertCell();
+            cell1.contentEditable = "true";
+            cell2.contentEditable = "true";
+            cell1.innerText = val;
+            cell2.innerText = data2[index][i];
           });
         });
       }
@@ -152,19 +179,28 @@
 
     // CSV保存
     function downloadCSV() {
-      let csv = [];
-      for (let r = 0; r < table.rows.length; r++) {
-        let row = [];
-        for (let c = 0; c < table.rows[r].cells.length; c++) {
-          row.push('"' + table.rows[r].cells[c].innerText.replace(/"/g, '""') + '"');
+      let csv1 = [];
+      let csv2 = [];
+      for (let r = 0; r < table1.rows.length; r++) {
+        let row1 = [];
+        let row2 = [];
+        for (let c = 0; c < table1.rows[r].cells.length; c++) {
+          row1.push('"' + table1.rows[r].cells[c].innerText.replace(/"/g, '""') + '"');
+          row2.push('"' + table2.rows[r].cells[c].innerText.replace(/"/g, '""') + '"');
         }
-        csv.push(row.join(","));
+        csv1.push(row1.join(","));
+        csv2.push(row2.join(","));
       }
-      let blob = new Blob([csv.join("\n")], { type: "text/csv" });
-      let link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "table.csv";
-      link.click();
+      let blob1 = new Blob([csv1.join("\n")], { type: "text/csv" });
+      let blob2 = new Blob([csv2.join("\n")], { type: "text/csv" });
+      let link1 = document.createElement("a");
+      let link2 = document.createElement("a");
+      link1.href = URL.createObjectURL(blob1);
+      link2.href = URL.createObjectURL(blob2);
+      link1.download = "table1.csv";
+      link2.download = "table2.csv";
+      link1.click();
+      link2.click();
     }
 
     // CSV読み込み
@@ -174,13 +210,18 @@
       let reader = new FileReader();
       reader.onload = function(e) {
         let rows = e.target.result.split("\n").map(r => r.split(","));
-        table.innerHTML = "";
+        table1.innerHTML = "";
+        table2.innerHTML = "";
         rows.forEach(r => {
-          let row = table.insertRow();
+          let row1 = table1.insertRow();
+          let row2 = table2.insertRow();
           r.forEach(val => {
-            let cell = row.insertCell();
-            cell.contentEditable = "true";
-            cell.innerText = val.replace(/^"|"$/g, '').replace(/""/g, '"');
+            let cell1 = row1.insertCell();
+            let cell2 = row2.insertCell();
+            cell1.contentEditable = "true";
+            cell2.contentEditable = "true";
+            cell1.innerText = val.replace(/^"|"$/g, '').replace(/""/g, '"');
+            cell2.innerText = val.replace(/^"|"$/g, '').replace(/""/g, '"');
           });
         });
       };
@@ -189,8 +230,10 @@
 
     // リセット
     function resetTable() {
-      table.innerHTML = "<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
-      localStorage.removeItem("myTable");
+      table1.innerHTML = "<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
+      table2.innerHTML = "<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
+      localStorage.removeItem("myTable1");
+      localStorage.removeItem("myTable2");
     }
   </script>
 </body>
