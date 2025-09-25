@@ -2,52 +2,92 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>エクセルみたいな表</title>
+  <title>エクセルみたいな表（二段表示＋ブラウザ保存＋CSV入出力＋列追加）</title>
   <style>
-    table { border-collapse: collapse; margin: 10px 0; }
-    th, td { border: 1px solid #ccc; padding: 5px; min-width: 80px; }
+    body {
+      font-family: sans-serif;
+    }
+
+    /* 表全体のスタイル */
+    .table-container {
+      display: flex;
+      flex-wrap: wrap;       /* 幅が足りなければ下に折り返す */
+      gap: 50px;             /* テーブル間の間隔 */
+      margin-bottom: 20px;
+    }
+
+    table { 
+      border-collapse: collapse; 
+      margin: 10px 0; 
+      flex: 1 1 45%;         /* 横幅の最大45％まで表示して2列化 */
+      min-width: 300px;
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 5px; 
+      min-width: 80px; 
+    }
     th { background: #eee; }
     td { background: #fcfcf5; }
-    button, label[for="csvFileInput"] {
+
+    /* ボタン用 */
+    button {
       margin: 5px;
       padding: 5px 10px;
       border: 1px solid #888;
       border-radius: 4px;
       background: #f0f0f0;
       cursor: pointer;
+      color: black;
+      text-decoration: none;
     }
+
+    /* ラベル用（見た目ボタン） */
+    label[for="csvFileInput"] {
+      margin: 5px;
+      padding: 5px 10px;
+      border: 1px solid #888;
+      border-radius: 4px;
+      background: #f0f0f0;
+      cursor: pointer;
+      color: black;
+      text-decoration: none;
+    }
+
     input[type="file"] {
       display: none; /* 本来のファイル選択を隠す */
     }
   </style>
 </head>
 <body>
-  <h2>エクセルみたいな表（ブラウザ保存＋CSV入出力＋列追加）</h2>
-  <table id="sheet">
-    <thead>
-      <tr id="header">
-        <th>A</th>
-        <th>B</th>
-        <th>C</th>
-        <th>D</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td contenteditable="true"></td>
-        <td contenteditable="true"></td>
-        <td contenteditable="true"></td>
-        <td contenteditable="true"></td>
-      </tr>
-    </tbody>
-  </table>
+  <h2>エクセルみたいな表（二段表示）</h2>
+
+  <div class="table-container">
+    <table id="sheet">
+      <thead>
+        <tr id="header">
+          <th>A</th>
+          <th>B</th>
+          <th>C</th>
+          <th>D</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
   <button onclick="addRow()">行を追加</button>
   <button onclick="addColumn()">列を追加</button>
   <button onclick="saveTable()">保存</button>
   <button onclick="downloadCSV()">CSVとして保存</button>
 
-  <!-- 見た目はボタンだけど、裏でinput[type=file]を呼ぶ -->
   <label for="csvFileInput">CSVを読み込む</label>
   <input type="file" id="csvFileInput" accept=".csv" onchange="uploadCSV(event)">
   
