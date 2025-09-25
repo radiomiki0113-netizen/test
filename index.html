@@ -1,332 +1,193 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>簡易スプレッドシート</title>
-<style>
-  body { font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; padding:20px; }
-  .sheet-wrap { max-width:100%; overflow:auto; border:1px solid #ddd; }
-  table.sheet { border-collapse: collapse; width:100%; min-width:720px; }
-  table.sheet th, table.sheet td { border:1px solid #e0e0e0; padding:6px 8px; text-align:left; min-width:80px; }
-  table.sheet th { background:#f7f7f8; position:sticky; top:0; z-index:2; }
-  table.sheet .col-header { background:#f0f4ff; font-weight:600; text-align:center; }
-  td:focus { outline: 2px solid #80bdff; }
-  .controls { margin:8px 0 12px 0; }
-  button { padding:6px 10px; }
-  .right { text-align:right; }
-  .meta { color:#666; font-size:0.9rem; margin-top:8px; }
-</style>
+  <meta charset="UTF-8">
+  <title>エクセル風テーブル</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 800px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: left;
+      min-width: 80px;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    td[contenteditable="true"] {
+      background: #fffaf0;
+    }
+    .buttons {
+      margin-top: 15px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 6px 12px;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    label {
+      padding: 6px 12px;
+      background: #eee;
+      border: 1px solid #aaa;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+  </style>
 </head>
 <body>
-
-<h1>簡易スプレッドシート（Editable）</h1>
-
-<div class="controls">
-  <button id="addRowBtn">行を追加</button>
-  <button id="resetBtn">リセット（初期状態）</button>
-</div>
-
-<div class="sheet-wrap">
-  <table id="sheet" class="sheet" tabindex="0" aria-label="Editable spreadsheet">
+  <h2>エクセルみたいな表（ブラウザ保存＋CSV入出力）</h2>
+  <table id="excelTable">
     <thead>
       <tr>
-        <th></th><!-- row header corner -->
+        <th>A</th>
+        <th>B</th>
+        <th>C</th>
+        <th>D</th>
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+      </tr>
+      <tr>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+      </tr>
     </tbody>
   </table>
-</div>
 
-<div class="meta">
-  操作：セルをクリックして編集。矢印 / Tab / Enter で移動。<br>
-  数式例：<code>=A1</code>、<code>=SUM(A1:A3)</code>。数式は現在のシート内のみ対応します（簡易実装）。
-</div>
+  <div class="buttons">
+    <button onclick="addRow()">行を追加</button>
+    <button onclick="saveTable()">保存</button>
+    <button onclick="exportCSV()">CSVとして保存</button>
+    <label for="csvFile">CSVを読み込む</label>
+    <input type="file" id="csvFile" accept=".csv" onchange="importCSV(event)">
+    <button onclick="clearTable()">リセット</button>
+  </div>
 
-<script>
-/* --- 設定 --- */
-const COLS = 8; // 初期列数（A..）
-const ROWS = 12; // 初期行数
-const sheet = document.getElementById('sheet');
-const tbody = sheet.querySelector('tbody');
-const thead = sheet.querySelector('thead tr');
+  <script>
+    const table = document.getElementById("excelTable");
 
-/* ヘッダー（A, B, C...）作成 */
-function colLetter(n){
-  // 0 -> A, 25->Z, 26->AA ...
-  let s = '';
-  n++;
-  while(n>0){
-    let m = (n-1)%26;
-    s = String.fromCharCode(65+m) + s;
-    n = Math.floor((n-1)/26);
-  }
-  return s;
-}
-
-function buildHeader(cols){
-  // clear existing
-  while(thead.firstChild) thead.removeChild(thead.firstChild);
-  const corner = document.createElement('th');
-  corner.textContent = '';
-  thead.appendChild(corner);
-  for(let c=0;c<cols;c++){
-    const th = document.createElement('th');
-    th.className = 'col-header';
-    th.textContent = colLetter(c);
-    thead.appendChild(th);
-  }
-}
-
-/* テーブル本体作成 */
-function buildBody(cols, rows){
-  tbody.innerHTML = '';
-  for(let r=1;r<=rows;r++){
-    const tr = document.createElement('tr');
-    const rowHeader = document.createElement('th');
-    rowHeader.textContent = r;
-    tr.appendChild(rowHeader);
-    for(let c=0;c<cols;c++){
-      const td = document.createElement('td');
-      td.contentEditable = true;
-      td.dataset.col = c;
-      td.dataset.row = r;
-      td.dataset.raw = ''; // 編集された「生の値」 を保存
-      td.tabIndex = -1;
-      td.id = `cell-${colLetter(c)}${r}`;
-      td.addEventListener('keydown', cellKeyDown);
-      td.addEventListener('blur', onCellBlur);
-      td.addEventListener('focus', onCellFocus);
-      tr.appendChild(td);
-    }
-    tbody.appendChild(tr);
-  }
-}
-
-/* 初期化 */
-function init(){
-  buildHeader(COLS);
-  buildBody(COLS, ROWS);
-  evaluateAll();
-}
-init();
-
-/* ユーティリティ：セル参照（例 "A1" -> element） */
-function getCellElement(ref){
-  ref = ref.toUpperCase().trim();
-  const m = ref.match(/^([A-Z]+)(\d+)$/);
-  if(!m) return null;
-  const colLetters = m[1];
-  const row = parseInt(m[2], 10);
-  // convert letters -> zero-based index
-  let col = 0;
-  for(let i=0;i<colLetters.length;i++){
-    col = col*26 + (colLetters.charCodeAt(i)-64);
-  }
-  col = col - 1;
-  return document.getElementById(`cell-${colLetter(col)}${row}`);
-}
-
-/* すべてのセルを評価（数式を解釈して表示） */
-function evaluateAll(){
-  const cells = tbody.querySelectorAll('td');
-  // two-pass approach: first read raw values, then compute
-  cells.forEach(td => {
-    // nothing here — raw is stored in dataset.raw
-  });
-  cells.forEach(td => renderCell(td));
-}
-
-/* セルの中身を描画（数式なら評価、それ以外はそのまま） */
-function renderCell(td){
-  const raw = td.dataset.raw ?? '';
-  if(raw.startsWith('=')){
-    const val = evaluateFormula(raw.slice(1), td);
-    td.textContent = val;
-  } else {
-    td.textContent = raw;
-  }
-}
-
-/* 簡易式評価器（=A1, =SUM(A1:A3) をサポート） */
-function evaluateFormula(expr, currentTd){
-  expr = expr.trim();
-  // SUM(range)
-  const sumMatch = expr.match(/^SUM\(\s*([A-Z]+\d+)\s*:\s*([A-Z]+\d+)\s*\)$/i);
-  if(sumMatch){
-    const a = sumMatch[1].toUpperCase();
-    const b = sumMatch[2].toUpperCase();
-    // get start/end coords
-    const start = parseRef(a);
-    const end = parseRef(b);
-    if(!start || !end) return '#ERROR';
-    let total = 0;
-    for(let r=start.row; r<=end.row; r++){
-      for(let c=start.col; c<=end.col; c++){
-        const el = document.getElementById(`cell-${colLetter(c)}${r}`);
-        if(!el) continue;
-        const raw = el.dataset.raw || '';
-        let v = 0;
-        if(raw.startsWith('=')){
-          const sub = evaluateFormula(raw.slice(1), el);
-          v = Number(sub) || 0;
-        } else {
-          v = Number(raw) || 0;
-        }
-        total += v;
+    // 行を追加
+    function addRow() {
+      const row = table.insertRow(-1);
+      for (let i = 0; i < 4; i++) {
+        const cell = row.insertCell(i);
+        cell.contentEditable = "true";
       }
     }
-    return total;
-  }
 
-  // 単一セル参照 =A1
-  const refMatch = expr.match(/^([A-Z]+\d+)$/i);
-  if(refMatch){
-    const target = getCellElement(refMatch[1]);
-    if(!target) return '';
-    const raw = target.dataset.raw || '';
-    if(raw.startsWith('=')){
-      return evaluateFormula(raw.slice(1), target);
+    // 保存（localStorage）
+    function saveTable() {
+      let data = [];
+      for (let i = 1; i < table.rows.length; i++) {
+        let row = [];
+        for (let j = 0; j < table.rows[i].cells.length; j++) {
+          row.push(table.rows[i].cells[j].innerText);
+        }
+        data.push(row);
+      }
+      localStorage.setItem("excelData", JSON.stringify(data));
+      alert("保存しました（ブラウザに保存）");
     }
-    return raw;
-  }
 
-  // 単純数式評価（注意：安全性簡易実装）
-  // ここでは + - * / の単純演算を許す（セル参照は A1 形式で置換）
-  // セル参照を探して置換
-  const replaced = expr.replace(/([A-Z]+\d+)/ig, function(_, ref){
-    const el = getCellElement(ref);
-    if(!el) return '0';
-    const raw = el.dataset.raw || '';
-    if(raw.startsWith('=')){
-      return evaluateFormula(raw.slice(1), el) || 0;
+    // 読み込み
+    function loadTable() {
+      const saved = localStorage.getItem("excelData");
+      if (saved) {
+        const data = JSON.parse(saved);
+        for (let i = 1; i < table.rows.length; i++) {
+          table.deleteRow(1);
+        }
+        data.forEach(rowData => {
+          const row = table.insertRow(-1);
+          rowData.forEach(cellData => {
+            const cell = row.insertCell(-1);
+            cell.contentEditable = "true";
+            cell.innerText = cellData;
+          });
+        });
+      }
     }
-    return raw || 0;
-  });
-  try {
-    // eslint-disable-next-line no-eval
-    const result = Function('"use strict"; return (' + replaced + ')')();
-    if(typeof result === 'number' && !isNaN(result)) return result;
-    return result ?? '';
-  } catch(e){
-    return '#ERROR';
-  }
-}
 
-/* 参照文字列を {col, row} に変換（A1 -> {col:0,row:1}） */
-function parseRef(ref){
-  const m = ref.match(/^([A-Z]+)(\d+)$/i);
-  if(!m) return null;
-  const letters = m[1].toUpperCase();
-  const row = parseInt(m[2], 10);
-  let col = 0;
-  for(let i=0;i<letters.length;i++){
-    col = col*26 + (letters.charCodeAt(i)-64);
-  }
-  col = col - 1;
-  return { col, row };
-}
+    // CSV出力
+    function exportCSV() {
+      let csv = [];
+      for (let i = 0; i < table.rows.length; i++) {
+        let row = [];
+        for (let j = 0; j < table.rows[i].cells.length; j++) {
+          let text = table.rows[i].cells[j].innerText.replace(/"/g, '""');
+          row.push('"' + text + '"');
+        }
+        csv.push(row.join(","));
+      }
+      const csvContent = csv.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "table.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
-/* セル編集時（フォーカス時に表示を raw に戻す） */
-function onCellFocus(e){
-  const td = e.currentTarget;
-  // 編集用に raw を表示（=から編集可能）
-  td.textContent = td.dataset.raw ?? '';
-  // place caret at end (簡易)
-  placeCaretAtEnd(td);
-}
-function placeCaretAtEnd(el){
-  const range = document.createRange();
-  const sel = window.getSelection();
-  range.selectNodeContents(el);
-  range.collapse(false);
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
+    // CSVインポート
+    function importCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const rows = text.split(/\r?\n/).map(line => line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/));
+        
+        // 表を初期化（ヘッダー以外削除）
+        for (let i = table.rows.length - 1; i > 0; i--) {
+          table.deleteRow(i);
+        }
 
-/* フォーカスアウトで raw を保存して再評価 */
-function onCellBlur(e){
-  const td = e.currentTarget;
-  // 保存：表示されたテキストを raw として保存
-  td.dataset.raw = td.textContent.trim();
-  // 再描画（数式評価）
-  evaluateAll();
-}
+        // 行を追加して値を反映
+        rows.forEach(rowData => {
+          if (rowData.length === 1 && rowData[0] === "") return; // 空行スキップ
+          const row = table.insertRow(-1);
+          rowData.forEach(cellData => {
+            const cell = row.insertCell(-1);
+            cell.contentEditable = "true";
+            cell.innerText = cellData.replace(/^"|"$/g, "").replace(/""/g, '"'); // CSVの " を解除
+          });
+        });
+      };
+      reader.readAsText(file);
+    }
 
-/* 矢印・Tab・Enterで移動 */
-function focusCell(col, row){
-  const el = document.getElementById(`cell-${colLetter(col)}${row}`);
-  if(el) el.focus();
-}
-function cellKeyDown(e){
-  const td = e.currentTarget;
-  const col = Number(td.dataset.col);
-  const row = Number(td.dataset.row);
-  if(e.key === 'ArrowRight'){ e.preventDefault(); focusCell(col+1, row); }
-  else if(e.key === 'ArrowLeft'){ e.preventDefault(); if(col>0) focusCell(col-1, row); }
-  else if(e.key === 'ArrowUp'){ e.preventDefault(); if(row>1) focusCell(col, row-1); }
-  else if(e.key === 'ArrowDown'){ e.preventDefault(); focusCell(col, row+1); }
-  else if(e.key === 'Tab'){ e.preventDefault(); if(!e.shiftKey) focusCell(col+1, row); else if(col>0) focusCell(col-1, row); }
-  else if(e.key === 'Enter'){ e.preventDefault(); focusCell(col, row+1); }
-}
+    // リセット
+    function clearTable() {
+      if (confirm("表をリセットしてもいいですか？（保存データも消えます）")) {
+        localStorage.removeItem("excelData");
+        for (let i = table.rows.length - 1; i > 0; i--) {
+          table.deleteRow(i);
+        }
+        addRow();
+        addRow();
+      }
+    }
 
-/* 行追加 */
-document.getElementById('addRowBtn').addEventListener('click', () => {
-  const currentRows = tbody.querySelectorAll('tr').length;
-  const newRow = currentRows + 1;
-  const tr = document.createElement('tr');
-  const rowHeader = document.createElement('th');
-  rowHeader.textContent = newRow;
-  tr.appendChild(rowHeader);
-  const cols = thead.children.length - 1;
-  for(let c=0;c<cols;c++){
-    const td = document.createElement('td');
-    td.contentEditable = true;
-    td.dataset.col = c;
-    td.dataset.row = newRow;
-    td.dataset.raw = '';
-    td.tabIndex = -1;
-    td.id = `cell-${colLetter(c)}${newRow}`;
-    td.addEventListener('keydown', cellKeyDown);
-    td.addEventListener('blur', onCellBlur);
-    td.addEventListener('focus', onCellFocus);
-    tr.appendChild(td);
-  }
-  tbody.appendChild(tr);
-});
-
-/* リセット */
-document.getElementById('resetBtn').addEventListener('click', () => {
-  buildHeader(COLS);
-  buildBody(COLS, ROWS);
-  evaluateAll();
-});
-
-/* クリックで最初のセルにフォーカスする（アクセシビリティ） */
-sheet.addEventListener('click', (e) => {
-  const t = e.target;
-  if(t.tagName === 'TD') {
-    t.focus();
-  } else if(t.tagName === 'TH' && t.parentElement && t.parentElement.rowIndex > 0){
-    // row header clicked -> focus first cell in row
-    const row = t.parentElement.rowIndex;
-    const firstCell = document.getElementById(`cell-${colLetter(0)}${row}`);
-    if(firstCell) firstCell.focus();
-  }
-});
-
-/* 初期のデモ値を入れる（任意） */
-(function demo(){
-  const a1 = document.getElementById('cell-A1');
-  if(a1){ a1.dataset.raw = '10'; }
-  const a2 = document.getElementById('cell-A2');
-  if(a2){ a2.dataset.raw = '20'; }
-  const a3 = document.getElementById('cell-A3');
-  if(a3){ a3.dataset.raw = '=SUM(A1:A2)'; }
-  evaluateAll();
-})();
-</script>
-
+    // ページ読み込み時に自動でデータ復元
+    window.onload = loadTable;
+  </script>
 </body>
 </html>
