@@ -167,7 +167,6 @@ button:active {
 // ブラウザに保存されている古いデータがCSVインポートを妨害するのを防ぎます
 if (localStorage.getItem('tableData')) {
     localStorage.removeItem('tableData');
-    // コンソールログはPCのデバッグ用なので、そのまま残しておいてください
     console.log("Local Storage data has been cleared."); 
 }
 
@@ -396,9 +395,13 @@ window.onload=()=>{
 }
 
 // ------------------------------------
-// 3. CSV操作関数 (exportCSV動作確認済み)
+// 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
+  // 🔥 修正点: エクスポート直前に強制リセットをかけることで、
+  // Local StorageやDOMに残った不正なヘッダー情報を排除します。
+  resetTables();
+  
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
   const h3s=document.querySelectorAll('h3');
   h3s.forEach((h,index)=>{
