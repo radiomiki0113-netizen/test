@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>就職活動メモ 完全版（列幅保存対応）</title>
+<title>就職活動メモ 完全版（ボタンのみ表示）</title>
 <style>
 body { font-family: Arial, sans-serif; padding: 20px; }
 h1 { font-size: 24px; }
-h3 { font-size: 18px; margin-top: 20px; }
+h3 { font-size: 18px; margin-top: 20px; font-weight: normal; } /* 太字解除 */
 table { border-collapse: collapse; margin-bottom: 20px; width: 100%; table-layout: fixed; }
 th, td { border: 1px solid #000; padding: 8px; text-align: left; overflow: hidden; white-space: nowrap; }
 th { cursor: pointer; }
@@ -47,19 +47,16 @@ button { margin: 3px; }
 </table>
 
 <div>
-  <strong>1段目操作:</strong>
-  <button onclick="addRow('table1')">行追加</button>
-  <button onclick="removeRow('table1')">行削除</button>
-  <button onclick="addCol('table1')">列追加</button>
-  <button onclick="removeCol('table1')">列削除</button>
+  <button onclick="addRow('table1')">行追加(1段目)</button>
+  <button onclick="removeRow('table1')">行削除(1段目)</button>
+  <button onclick="addCol('table1')">列追加(1段目)</button>
+  <button onclick="removeCol('table1')">列削除(1段目)</button>
 
-  <strong>2段目操作:</strong>
-  <button onclick="addRow('table2')">行追加</button>
-  <button onclick="removeRow('table2')">行削除</button>
-  <button onclick="addCol('table2')">列追加</button>
-  <button onclick="removeCol('table2')">列削除</button>
+  <button onclick="addRow('table2')">行追加(2段目)</button>
+  <button onclick="removeRow('table2')">行削除(2段目)</button>
+  <button onclick="addCol('table2')">列追加(2段目)</button>
+  <button onclick="removeCol('table2')">列削除(2段目)</button>
 
-  <strong>共通操作:</strong>
   <button onclick="resetTables()">リセット</button>
   <button onclick="saveTables()">保存</button>
   <button onclick="exportCSV()">CSVとして保存</button>
