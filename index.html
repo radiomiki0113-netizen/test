@@ -65,7 +65,8 @@ td[contenteditable="true"]:focus {
   outline: 1px solid var(--primary-color);
 }
 td {
-  text-align: center;
+  /* 👈 ここを修正しました！ */
+  text-align: center; 
 }
 
 .button-group {
@@ -274,15 +275,6 @@ function removeCol(tableId){
 // 2. データ操作関数 
 // ------------------------------------
 
-// 💥 この関数を削除しました。exportCSVから呼び出されなくなり、編集が保持されます。
-/*
-function fixH3Titles(){
-    document.querySelector('h1').innerText = "就職活動 メモ"; 
-    document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
-    document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
-}
-*/
-
 // データ行も含めて全てをリセットする核となる関数
 function resetData(){
     // 見出しを初期化
@@ -420,7 +412,6 @@ window.onload=()=>{
 // 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
-  // 💥 fixH3Titles()の呼び出しを削除しました。これにより、H3の内容が元に戻らなくなります。
   
   // H1の内容を取得
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
