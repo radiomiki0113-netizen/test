@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>就職活動 メモ</title>
 <style>
-/* 🎨 デザインCSS (中央揃えの優先度を修正) */
+/* 🎨 デザインCSS (全tdに対する!importantは維持) */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -58,21 +58,16 @@ th {
   position: sticky; 
   top: 0;
   z-index: 10;
-  text-align: left; /* ヘッダーセルは左揃えを維持 */
+  text-align: left;
 }
 td[contenteditable="true"]:focus {
   background-color: #fffacd; 
   outline: 1px solid var(--primary-color);
 }
-td {
-  /* 🚩 すべてのデータセルを中央揃えに強制 */
-  text-align: center !important; 
-}
 
-/* 🚨 最後の修正: 最初の列のセルに対して、ID指定でさらに高い優先度で中央揃えを強制します！ */
-#table1 td:first-child,
-#table2 td:first-child {
-  text-align: center !important;
+/* CSSでの強制は最後の手段として残しますが、JSで決定打を打ちます */
+td {
+  text-align: center !important; 
 }
 
 .button-group {
@@ -131,7 +126,12 @@ button:active {
     </tr>
   </thead>
   <tbody>
-    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+    <tr>
+        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+    </tr>
   </tbody>
 </table>
 
@@ -153,7 +153,12 @@ button:active {
     </tr>
   </thead>
   <tbody>
-    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+    <tr>
+        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+    </tr>
   </tbody>
 </table>
 
@@ -179,6 +184,13 @@ if (localStorage.getItem('tableData')) {
     console.log("Local Storage data has been cleared."); 
 }
 
+// 🚩 決定打となるJavaScript関数
+function enforceCenter(cell) {
+    // セルからフォーカスが外れた（編集が終わった）瞬間に、中央揃えを上書きする
+    cell.style.textAlign = 'center';
+}
+
+
 // --- 補助関数 ---
 function getTableHeadCells(tableId) {
     const table = document.getElementById(tableId);
@@ -198,7 +210,7 @@ const decodeCSVLine = (line) => {
 };
 
 // ------------------------------------
-// 1. テーブル操作関数 
+// 1. テーブル操作関数 (中央揃えの処理を追加)
 // ------------------------------------
 function addRow(tableId){
   const table = document.getElementById(tableId);
@@ -214,6 +226,9 @@ function addRow(tableId){
   for(let i=0; i<cols; i++){ 
     const cell=row.insertCell(); 
     cell.contentEditable="true"; 
+    // 🚨 修正: 行追加時
+    cell.style.textAlign = "center";
+    cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
   }
 }
 
@@ -249,39 +264,23 @@ function addCol(tableId){
   for(let row of tbody.rows){ 
     const cell=row.insertCell(); 
     cell.contentEditable="true"; 
+    // 🚨 修正: 列追加時
+    cell.style.textAlign = "center";
+    cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
   }
   
   if (tbody.rows.length === 0) {
       const row = tbody.insertCell();
       const cell = row.insertCell(); 
       cell.contentEditable="true";
-  }
-}
-
-function removeCol(tableId){
-  const table = document.getElementById(tableId);
-  const tbody = table.tBodies[0];
-  const ths = getTableHeadCells(tableId);
-  
-  if(ths.length > 1){ 
-    ths[ths.length - 1].remove(); 
-    if (tbody) {
-        for(let row of tbody.rows) {
-          if (row.cells.length > 0) {
-            row.deleteCell(-1); 
-          }
-        }
-    }
-  } else {
-      alert("最後の列は削除できません。");
+      cell.style.textAlign = "center"; 
+      cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
   }
 }
 
 // ------------------------------------
-// 2. データ操作関数 
+// 2. データ操作関数 (中央揃えの処理を追加)
 // ------------------------------------
-
-// データ行も含めて全てをリセットする核となる関数
 function resetData(){
     // 見出しを初期化
     document.querySelector('h1').innerText = "就職活動 メモ";
@@ -321,50 +320,52 @@ function resetData(){
         for (let i = 0; i < headerCount; i++) {
             const cell = row.insertCell(); 
             cell.contentEditable = "true"; 
+            // 🚨 修正: リセット時
+            cell.style.textAlign = "center";
+            cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
         }
     });
     localStorage.removeItem('tableData'); // Local Storageもクリア
 }
 
-// ユーザーが「全リセット」ボタンを押したときにのみアラートを出す
-function resetTables(){
-    resetData();
-    alert("テーブルとローカル保存データをリセットしました！");
-}
-
 function saveTables(){
-  const data={};
-  // H1, H3のテキストも保存する (H1は編集不可になりましたが、保存ロジックは維持)
-  data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h3')).map(h=>h.innerText)];
-  
-  ['table1','table2'].forEach((id,index)=>{
-    const table=document.getElementById(id);
-    const rows=[];
+    // 既存の保存ロジック（中央揃えの強制は不要）
+    const data={};
+    data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h3')).map(h=>h.innerText)];
     
-    const headerCells = Array.from(getTableHeadCells(id)).map(cell => cell.innerText);
-    rows.push(headerCells);
+    ['table1','table2'].forEach((id,index)=>{
+        const table=document.getElementById(id);
+        const rows=[];
+        
+        const headerCells = Array.from(getTableHeadCells(id)).map(cell => cell.innerText);
+        rows.push(headerCells);
 
-    const tbody = table.tBodies[0];
-    if (tbody) {
-        for(let row of tbody.rows){
-          const cells=[];
-          for(let cell of row.cells) cells.push(cell.innerText);
-          rows.push(cells);
+        const tbody = table.tBodies[0];
+        if (tbody) {
+            for(let row of tbody.rows){
+            const cells=[];
+            for(let cell of row.cells) cells.push(cell.innerText);
+            rows.push(cells);
+            }
         }
-    }
-    data['table'+(index+1)]=rows;
-  });
-  localStorage.setItem('tableData',JSON.stringify(data));
-  alert("データをブラウザに保存しました！");
+        data['table'+(index+1)]=rows;
+    });
+    localStorage.setItem('tableData',JSON.stringify(data));
+    alert("データをブラウザに保存しました！");
 }
 
 window.onload=()=>{
   const saved=localStorage.getItem('tableData');
+  
+  // 🚨 既存の初期設定HTML要素にJSイベントリスナーを付与
+  document.querySelectorAll('td[contenteditable="true"]').forEach(cell => {
+    cell.onblur = function() { enforceCenter(this); };
+  });
+
   if(saved){
     const data=JSON.parse(saved);
     const texts=[document.querySelector('h1'), ...document.querySelectorAll('h3')];
     data.texts.forEach((txt,i)=>{ 
-        // 読み込み時にH1, H3を復元
         if(texts[i]) texts[i].innerText=txt; 
     });
     
@@ -400,6 +401,9 @@ window.onload=()=>{
               const cell = row.insertCell(); 
               cell.contentEditable="true"; 
               cell.innerText = cellVal; 
+              // 🚨 修正: 読み込み時
+              cell.style.textAlign = "center"; 
+              cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
           });
       });
 
@@ -408,6 +412,8 @@ window.onload=()=>{
         headerData.forEach(() => { 
             const cell = row.insertCell(); 
             cell.contentEditable="true"; 
+            cell.style.textAlign = "center"; // 🚨 修正
+            cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
         });
       }
     });
@@ -418,17 +424,15 @@ window.onload=()=>{
 // 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
+  // CSVエクスポートロジックは変更なし
   
-  // H1の内容を取得
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
   const h3s=document.querySelectorAll('h3');
   
   h3s.forEach((h,index)=>{
-    // H3の内容（編集後のサブタイトル）をそのままCSVに書き込む
     csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
     const table=document.getElementById('table'+(index+1));
     
-    // 2つ目のテーブルの前に空白行を追加
     if (index === 1) {
         csv += '\n'; 
     }
@@ -451,7 +455,7 @@ function exportCSV(){
 }
 
 // ------------------------------------
-// 4. CSVインポート関数 (最終修正版)
+// 4. CSVインポート関数 (中央揃えの処理を追加)
 // ------------------------------------
 function importCSV(event){
   const file=event.target.files[0];
@@ -459,14 +463,10 @@ function importCSV(event){
   const reader=new FileReader();
   
   reader.onload=e=>{
-    // linesはCSVの各行を要素とする配列（空行はフィルター済み）
     const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
     if(lines.length<1) return;
     
-    // H1は固定なので、CSVから読み込まず、HTML上の既存値を維持する
-    
-    let tableIndex=-1, lineIndex=1; // メインタイトル (0) の次の行から開始
-
+    let tableIndex=-1, lineIndex=1; 
     const h3s=document.querySelectorAll('h3');
     const tables=[document.getElementById('table1'), document.getElementById('table2')];
     
@@ -474,18 +474,15 @@ function importCSV(event){
       tableIndex++;
       const table = tables[tableIndex];
 
-      // 2. サブタイトルの復元
       if(h3s[tableIndex] && lines[lineIndex]) {
           const decodedLine = decodeCSVLine(lines[lineIndex]);
           
-          // CSV行が1つの要素しかなく、それが空でない場合、H3タイトルとして扱う
           if (decodedLine.length === 1 && decodedLine[0] !== "") {
               h3s[tableIndex].innerText = decodedLine[0];
-              lineIndex++; // サブタイトル行を消費する
+              lineIndex++; 
           }
       }
       
-      // tHead/tBodyの存在チェックと作成
       if (!table.tHead) table.createTHead();
       if (table.tHead.rows.length === 0) table.tHead.insertRow();
       const tHeadRow = table.tHead.rows[0];
@@ -493,11 +490,9 @@ function importCSV(event){
       let tbody = table.tBodies[0];
       if (!tbody) { tbody = table.createTBody(); }
       
-      // ヘッダーを読み込む前に、tbodyとtHeadをクリアする
       tbody.innerHTML = '';
       tHeadRow.innerHTML = '';
       
-      // 3. ヘッダー行の復元
       if(lineIndex < lines.length && lines[lineIndex]) {
           const headerCells = decodeCSVLine(lines[lineIndex]);
           headerCells.forEach(h => { 
@@ -506,35 +501,31 @@ function importCSV(event){
               th.innerText = h;
               tHeadRow.appendChild(th);
           });
-          lineIndex++; // 次の行（データ行）へ
+          lineIndex++; 
       }
       
-      // 4. データ行の復元
       const expectedCols = tHeadRow.cells.length;
 
       while(lineIndex < lines.length && lines[lineIndex]){
         const rowCells = decodeCSVLine(lines[lineIndex]);
         
-        // ヘッダーが一つしかないのに、データ行に複数のデータがある場合（=次のサブタイトル行である可能性が高い）はbreak
         if (expectedCols === 1 && rowCells.length > 1) break;
-        
-        // 最初の列が空文字列で、かつデコード結果が1つだけの場合もブレイク（次のサブタイトルである可能性）
         if (rowCells.length === 1 && rowCells[0] !== "") {
             break;
         }
 
         const row = tbody.insertRow();
-        // ヘッダーの列数に合わせてデータを挿入
         for (let i = 0; i < expectedCols; i++) {
             const cell = row.insertCell(); 
             cell.contentEditable="true"; 
-            // rowCellsにデータがない場合は空文字列を挿入
             cell.innerText=rowCells[i] ? rowCells[i] : ''; 
+            // 🚨 修正: インポート時
+            cell.style.textAlign = "center";
+            cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
         }
         lineIndex++;
       }
       
-      // 最後の行の後に改行を想定して次のサブタイトルへ進む
       lineIndex++; 
     }
     alert("CSVファイルをインポートしました！");
