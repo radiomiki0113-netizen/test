@@ -270,50 +270,69 @@ function removeCol(tableId){
 // ------------------------------------
 // 2. データ操作関数 
 // ------------------------------------
-// 🔥 新設: データとDOMを初期化する核となる関数 (アラートなし)
-function resetData(){
-  document.querySelector('h1').innerText = "就職活動 メモ";
-  const defaultHeaders = {
-    'table1': ['企業名', '業種', '選考状況', '次回予定'],
-    'table2': ['企業名', '興味度', '備考', '情報源']
-  };
 
-  document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
-  document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
+// 🔥 新設: 見出しとLocal Storageのみをリセットし、データ行は保持する関数
+function resetHeader(){
+    document.querySelector('h1').innerText = "就職活動 メモ";
+    const defaultHeaders = {
+        'table1': ['企業名', '業種', '選考状況', '次回予定'],
+        'table2': ['企業名', '興味度', '備考', '情報源']
+    };
 
-  ['table1','table2'].forEach(id => {
-    const table = document.getElementById(id);
-    
-    let tbody = table.tBodies[0];
-    if (!tbody) { tbody = table.createTBody(); }
-    
-    let tHeadRow;
-    if (table.tHead && table.tHead.rows.length > 0) {
-        tHeadRow = table.tHead.rows[0];
-    } else {
-        if (!table.tHead) table.createTHead();
-        tHeadRow = table.tHead.insertRow();
-    }
-    
-    tHeadRow.innerHTML = '';
-    defaultHeaders[id].forEach(headerText => {
-      const th = document.createElement('th');
-      th.contentEditable = "true";
-      th.innerText = headerText;
-      tHeadRow.appendChild(th);
+    document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
+    document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
+
+    ['table1','table2'].forEach(id => {
+        const table = document.getElementById(id);
+        
+        let tHeadRow;
+        if (table.tHead && table.tHead.rows.length > 0) {
+            tHeadRow = table.tHead.rows[0];
+        } else {
+            if (!table.tHead) table.createTHead();
+            tHeadRow = table.tHead.insertRow();
+        }
+        
+        // ヘッダーをデフォルト値で上書きする
+        tHeadRow.innerHTML = '';
+        defaultHeaders[id].forEach(headerText => {
+            const th = document.createElement('th');
+            th.contentEditable = "true";
+            th.innerText = headerText;
+            tHeadRow.appendChild(th);
+        });
+        
+        // tbody（データ行）は触らない
     });
-
-    tbody.innerHTML = '';
-    const row = tbody.insertRow();
-    defaultHeaders[id].forEach(() => {
-        const cell = row.insertCell(); 
-        cell.contentEditable = "true"; 
-    });
-  });
-  localStorage.removeItem('tableData'); 
+    localStorage.removeItem('tableData'); 
 }
 
-// 🔥 修正: ユーザーが「全リセット」ボタンを押したときにのみアラートを出す
+
+// データ行も含めて全てをリセットする核となる関数
+function resetData(){
+    resetHeader(); // まず見出しをリセット
+    const defaultHeaders = {
+        'table1': ['企業名', '業種', '選考状況', '次回予定'],
+        'table2': ['企業名', '興味度', '備考', '情報源']
+    };
+
+    ['table1','table2'].forEach(id => {
+        const table = document.getElementById(id);
+        let tbody = table.tBodies[0];
+        if (!tbody) { tbody = table.createTBody(); }
+        
+        // tbody（データ行）を空にし、1行だけ空の行を追加する
+        tbody.innerHTML = '';
+        const row = tbody.insertRow();
+        const headerCount = defaultHeaders[id].length;
+        for (let i = 0; i < headerCount; i++) {
+            const cell = row.insertCell(); 
+            cell.contentEditable = "true"; 
+        }
+    });
+}
+
+// ユーザーが「全リセット」ボタンを押したときにのみアラートを出す
 function resetTables(){
     resetData();
     alert("テーブルとローカル保存データをリセットしました！");
@@ -401,8 +420,8 @@ window.onload=()=>{
 // 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
-  // 🔥 修正: アラートの出ない resetData() を呼び出すように変更
-  resetData();
+  // 🔥 修正点: 入力データを消さない resetHeader() を呼び出すように変更！
+  resetHeader(); 
   
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
   const h3s=document.querySelectorAll('h3');
