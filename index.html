@@ -1,199 +1,365 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>就職活動 メモ</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { font-size: 24px; }
-    h3 { font-size: 18px; margin-top: 20px; font-weight: normal; }
-    table { border-collapse: collapse; margin-bottom: 20px; width: 100%; }
-    th, td {
-      border: 1px solid #000;
-      padding: 8px;
-      min-width: 100px;
-      text-align: left;
-    }
-    button { margin: 5px; }
-  </style>
+<meta charset="UTF-8">
+<title>就職活動 メモ</title>
+<style>
+/* 🎨 デザイン改善のためのCSS (前回のコードから変更なし) */
+:root {
+  --primary-color: #007bff; /* 青 */
+  --secondary-color: #6c757d; /* 灰色 */
+  --light-bg: #f8f9fa; /* 薄い背景 */
+  --border-color: #dee2e6;
+  --header-bg: #e9ecef;
+}
+body { 
+  font-family: 'Helvetica Neue', Arial, sans-serif; 
+  padding: 30px; 
+  background-color: var(--light-bg);
+  color: #333;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+h1 { 
+  font-size: 28px; 
+  border-bottom: 3px solid var(--primary-color);
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+  color: #212529;
+  cursor: text; /* 編集可能を示す */
+}
+h3 { 
+  font-size: 20px; 
+  margin-top: 30px; 
+  margin-bottom: 15px; 
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: text; /* 編集可能を示す */
+}
+table { 
+  border-collapse: collapse; 
+  margin-bottom: 25px; 
+  width: 100%; 
+  table-layout: fixed; 
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  background-color: white;
+}
+th, td { 
+  border: 1px solid var(--border-color); 
+  padding: 12px 15px; 
+  text-align: left; 
+  white-space: normal;
+  word-wrap: break-word;
+  vertical-align: top;
+}
+th {
+  background-color: var(--header-bg); 
+  font-weight: bold;
+  color: #495057;
+  position: sticky; 
+  top: 0;
+  z-index: 10;
+}
+td[contenteditable="true"]:focus {
+  background-color: #fffacd; 
+  outline: 1px solid var(--primary-color);
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+.table-controls {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+}
+.global-controls {
+    margin-top: 20px;
+    padding: 10px 0;
+}
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  font-weight: 500;
+}
+button:hover {
+  background-color: #0056b3;
+}
+button:active {
+  transform: scale(0.98);
+}
+.secondary-btn {
+  background-color: var(--secondary-color);
+}
+.secondary-btn:hover {
+  background-color: #5a6268;
+}
+</style>
 </head>
 <body>
-  <h1 id="mainTitle">就職活動 メモ</h1>
-  <h3 id="sub1">動いている企業</h3>
-  <table id="table1">
-    <tbody>
-      <tr><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-    </tbody>
-  </table>
 
-  <h3 id="sub2">2段目の表用サブタイトル</h3>
-  <table id="table2">
-    <tbody>
-      <tr><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-    </tbody>
-  </table>
+<h1 contenteditable="true">就職活動 メモ</h1>
+<br>
 
-  <button onclick="addRow('table1')">1段目に行追加</button>
-  <button onclick="removeRow('table1')">1段目の行削除</button>
-  <button onclick="addCol('table1')">1段目に列追加</button>
-  <button onclick="removeCol('table1')">1段目の列削除</button>
-  <br>
-  <button onclick="addRow('table2')">2段目に行追加</button>
-  <button onclick="removeRow('table2')">2段目の行削除</button>
-  <button onclick="addCol('table2')">2段目に列追加</button>
-  <button onclick="removeCol('table2')">2段目の列削除</button>
-  <br>
+<h3 contenteditable="true">動いている企業</h3>
+<table id="table1">
+  <thead>
+    <tr>
+      <th contenteditable="true">企業名</th>
+      <th contenteditable="true">業種</th>
+      <th contenteditable="true">選考状況</th>
+      <th contenteditable="true">次回予定</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+  </tbody>
+</table>
 
-  <button onclick="resetTables()">リセット</button>
-  <button onclick="saveTables()">保存</button>
-  <button onclick="exportCSV()">CSVとして保存</button>
-  <input type="file" id="csvFileInput" accept=".csv" onchange="importCSV(event)">
+<div class="button-group table-controls">
+  <button onclick="addRow('table1')">行追加</button>
+  <button onclick="removeRow('table1')" class="secondary-btn">行削除</button>
+  <button onclick="addCol('table1')">列追加</button>
+  <button onclick="removeCol('table1')" class="secondary-btn">列削除</button>
+</div>
 
-  <script>
-    function addRow(tableId) {
-      const tbody = document.getElementById(tableId).querySelector('tbody');
-      const cols = tbody.rows[0] ? tbody.rows[0].cells.length : 1;
-      const newRow = tbody.insertRow();
-      for (let i = 0; i < cols; i++) {
-        const cell = newRow.insertCell();
-        cell.contentEditable = "true";
+<h3 contenteditable="true">情報収集中の企業</h3>
+<table id="table2">
+  <thead>
+    <tr>
+      <th contenteditable="true">企業名</th>
+      <th contenteditable="true">興味度</th>
+      <th contenteditable="true">備考</th>
+      <th contenteditable="true">情報源</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+  </tbody>
+</table>
+
+<div class="button-group table-controls">
+  <button onclick="addRow('table2')">行追加</button>
+  <button onclick="removeRow('table2')" class="secondary-btn">行削除</button>
+  <button onclick="addCol('table2')">列追加</button>
+  <button onclick="removeCol('table2')" class="secondary-btn">列削除</button>
+</div>
+
+<div class="button-group global-controls">
+  <button onclick="saveTables()">データ保存 (ブラウザ)</button>
+  <button onclick="exportCSV()" class="secondary-btn">CSVとしてエクスポート</button>
+  <button onclick="document.getElementById('csvFileInput').click()" class="secondary-btn">CSVインポート</button>
+  <button onclick="resetTables()">全リセット</button>
+  <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+</div>
+
+<script>
+// --- JS関数の統合と調整 (前回の改良コードから変更なし) ---
+function getTableHeadCells(tableId) {
+    return document.getElementById(tableId).tHead.rows[0].cells;
+}
+function getTableBody(tableId) {
+    return document.getElementById(tableId).tBodies[0];
+}
+
+function addRow(tableId){
+  const tbody = getTableBody(tableId);
+  const cols = getTableHeadCells(tableId).length;
+  if (cols === 0) return; 
+
+  const row = tbody.insertRow();
+  for(let i=0; i<cols; i++){ 
+    const cell=row.insertCell(); 
+    cell.contentEditable="true"; 
+  }
+}
+
+function removeRow(tableId){
+  const tbody = getTableBody(tableId);
+  if(tbody.rows.length > 1) {
+    tbody.deleteRow(-1);
+  } else {
+    if (tbody.rows.length === 1) {
+        Array.from(tbody.rows[0].cells).forEach(cell => cell.innerText = '');
+    }
+  }
+}
+
+function addCol(tableId){
+  const tbody = getTableBody(tableId);
+  const ths = getTableHeadCells(tableId);
+  
+  const th = document.createElement('th'); 
+  th.innerText = `新規列`;
+  th.contentEditable="true"; 
+  ths.appendChild(th);
+  
+  for(let row of tbody.rows){ 
+    const cell=row.insertCell(); 
+    cell.contentEditable="true"; 
+  }
+}
+
+function removeCol(tableId){
+  const tbody = getTableBody(tableId);
+  const ths = getTableHeadCells(tableId);
+  
+  if(ths.length > 1){ 
+    ths[ths.length - 1].remove(); 
+    for(let row of tbody.rows) {
+      if (row.cells.length > 0) {
+        row.deleteCell(-1); 
       }
     }
+  } else {
+      alert("最後の列は削除できません。");
+  }
+}
 
-    function removeRow(tableId) {
-      const tbody = document.getElementById(tableId).querySelector('tbody');
-      if (tbody.rows.length > 1) tbody.deleteRow(-1);
+function resetTables(){
+  document.querySelector('h1').innerText = "就職活動 メモ";
+  // デフォルトのヘッダーとデータ行を再設定
+  const defaultHeaders = {
+    // 1つ目のテーブルのデフォルトヘッダーをご要望に合わせて更新
+    'table1': ['企業名', '業種', '選考状況', '次回予定'],
+    'table2': ['企業名', '興味度', '備考', '情報源']
+  };
+
+  document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
+  document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
+
+  ['table1','table2'].forEach(id => {
+    const table = document.getElementById(id);
+    const tbody = table.tBodies[0];
+    const tHeadRow = table.tHead.rows[0];
+    
+    // ヘッダーを初期化
+    tHeadRow.innerHTML = '';
+    defaultHeaders[id].forEach(headerText => {
+      const th = document.createElement('th');
+      th.contentEditable = "true";
+      th.innerText = headerText;
+      tHeadRow.appendChild(th);
+    });
+
+    // データ行を初期化
+    tbody.innerHTML = '';
+    const row = tbody.insertRow();
+    defaultHeaders[id].forEach(() => {
+        const cell = row.insertCell(); 
+        cell.contentEditable = "true"; 
+    });
+  });
+  localStorage.removeItem('tableData'); 
+  alert("テーブルとローカル保存データをリセットしました！");
+}
+
+function saveTables(){
+  const data={};
+  data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h3')).map(h=>h.innerText)];
+  
+  ['table1','table2'].forEach((id,index)=>{
+    const table=document.getElementById(id);
+    const rows=[];
+    const headerCells = Array.from(table.tHead.rows[0].cells).map(cell => cell.innerText);
+    rows.push(headerCells);
+
+    for(let row of table.tBodies[0].rows){
+      const cells=[];
+      for(let cell of row.cells) cells.push(cell.innerText);
+      rows.push(cells);
     }
+    data['table'+(index+1)]=rows;
+  });
+  localStorage.setItem('tableData',JSON.stringify(data));
+  alert("データをブラウザに保存しました！");
+}
 
-    function addCol(tableId) {
-      const tbody = document.getElementById(tableId).querySelector('tbody');
-      for (let row of tbody.rows) {
-        const cell = row.insertCell();
-        cell.contentEditable = "true";
-      }
-    }
+window.onload=()=>{
+  const saved=localStorage.getItem('tableData');
+  if(saved){
+    const data=JSON.parse(saved);
+    const texts=[document.querySelector('h1'), ...document.querySelectorAll('h3')];
+    data.texts.forEach((txt,i)=>{ if(texts[i]) texts[i].innerText=txt; });
+    
+    ['table1','table2'].forEach((id,index)=>{
+      const table=document.getElementById(id);
+      const tbody=table.tBodies[0];
+      const tHeadRow=table.tHead.rows[0];
+      const allRows=data['table'+(index+1)]; 
 
-    function removeCol(tableId) {
-      const tbody = document.getElementById(tableId).querySelector('tbody');
-      const colCount = tbody.rows[0].cells.length;
-      if (colCount > 1) {
-        for (let row of tbody.rows) row.deleteCell(-1);
-      }
-    }
-
-    function resetTables() {
-      document.getElementById("table1").querySelector("tbody").innerHTML =
-        "<tr><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
-      document.getElementById("table2").querySelector("tbody").innerHTML =
-        "<tr><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
-      localStorage.removeItem("tableData");
-    }
-
-    function saveTables() {
-      const data = {
-        mainTitle: document.getElementById("mainTitle").innerText,
-        sub1: document.getElementById("sub1").innerText,
-        sub2: document.getElementById("sub2").innerText,
-        table1: [],
-        table2: []
-      };
-      for (let row of document.querySelectorAll("#table1 tbody tr")) {
-        data.table1.push([...row.cells].map(cell => cell.innerText));
-      }
-      for (let row of document.querySelectorAll("#table2 tbody tr")) {
-        data.table2.push([...row.cells].map(cell => cell.innerText));
-      }
-      localStorage.setItem("tableData", JSON.stringify(data));
-      alert("保存しました！");
-    }
-
-    window.onload = () => {
-      const saved = localStorage.getItem("tableData");
-      if (saved) {
-        const data = JSON.parse(saved);
-        document.getElementById("mainTitle").innerText = data.mainTitle;
-        document.getElementById("sub1").innerText = data.sub1;
-        document.getElementById("sub2").innerText = data.sub2;
-        restoreTable("table1", data.table1);
-        restoreTable("table2", data.table2);
-      }
-    };
-
-    function restoreTable(tableId, rows) {
-      const tbody = document.getElementById(tableId).querySelector("tbody");
-      tbody.innerHTML = "";
-      rows.forEach(r => {
-        const row = tbody.insertRow();
-        r.forEach(c => {
-          const cell = row.insertCell();
-          cell.contentEditable = "true";
-          cell.innerText = c;
-        });
+      // 1. ヘッダーの復元
+      const headerData = allRows[0] || [];
+      tHeadRow.innerHTML = '';
+      headerData.forEach(val => {
+        const th = document.createElement('th');
+        th.contentEditable = "true";
+        th.innerText = val;
+        tHeadRow.appendChild(th);
       });
-    }
 
-    function exportCSV() {
-      let csv = "";
-      csv += document.getElementById("mainTitle").innerText + "\n\n";
-      csv += document.getElementById("sub1").innerText + "\n";
-      csv += tableToCSV("table1") + "\n";
-      csv += document.getElementById("sub2").innerText + "\n";
-      csv += tableToCSV("table2") + "\n";
-      const blob = new Blob([csv], { type: "text/csv" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "tables.csv";
-      a.click();
-    }
+      // 2. データ行の復元
+      const dataRows = allRows.slice(1);
+      tbody.innerHTML = '';
+      
+      dataRows.forEach(rowData => {
+          const row = tbody.insertRow();
+          rowData.forEach(cellVal => { 
+              const cell = row.insertCell(); 
+              cell.contentEditable="true"; 
+              cell.innerText = cellVal; 
+          });
+      });
 
-    function tableToCSV(tableId) {
-      let out = "";
-      for (let row of document.getElementById(tableId).rows) {
-        let cells = [...row.cells].map(c => `"${c.innerText.replace(/"/g, '""')}"`);
-        out += cells.join(",") + "\n";
-      }
-      return out;
-    }
-
-    function importCSV(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const lines = e.target.result.split("\n").map(l => l.trimEnd());
-        let i = 0;
-        document.getElementById("mainTitle").innerText = lines[i++] || "就職活動 メモ";
-        i++;
-        document.getElementById("sub1").innerText = lines[i++] || "動いている企業";
-        i = fillTable("table1", lines, i);
-        i++;
-        document.getElementById("sub2").innerText = lines[i++] || "2段目の表用サブタイトル";
-        fillTable("table2", lines, i);
-      };
-      reader.readAsText(file);
-    }
-
-    function fillTable(tableId, lines, start) {
-      const tbody = document.getElementById(tableId).querySelector("tbody");
-      tbody.innerHTML = "";
-      let i = start;
-      for (; i < lines.length; i++) {
-        if (!lines[i].trim()) break;
+      if (tbody.rows.length === 0 && headerData.length > 0) {
         const row = tbody.insertRow();
-        const cells = lines[i].split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
-        cells.forEach(c => {
-          const cell = row.insertCell();
-          cell.contentEditable = "true";
-          cell.innerText = c.replace(/^"|"$/g, "").replace(/""/g, '"');
+        headerData.forEach(() => { 
+            const cell = row.insertCell(); 
+            cell.contentEditable="true"; 
         });
       }
-      if (tbody.rows.length === 0) {
-        const row = tbody.insertRow();
-        row.insertCell().contentEditable = "true";
-        row.insertCell().contentEditable = "true";
-      }
-      return i;
+    });
+  }
+}
+
+function exportCSV(){
+  let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
+  const h3s=document.querySelectorAll('h3');
+  h3s.forEach((h,index)=>{
+    csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
+    const table=document.getElementById('table'+(index+1));
+    
+    const headerCells = Array.from(table.tHead.rows[0].cells).map(cell => cell.innerText.replace(/"/g,'""'));
+    csv+='"' + headerCells.join('","') + '"\n';
+
+    for(let row of table.tBodies[0].rows){
+      let cells=[];
+      for(let cell of row.cells) cells.push(cell.innerText.replace(/"/g,'""'));
+      csv+='"' + cells.join('","') + '"\n';
     }
-  </script>
-</body>
-</html>
+    csv+='\n';
+  });
+  const blob=new Blob(['\ufeff', csv],{type:'text/csv;charset=utf-8'}); 
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='job_search_memo.csv'; a.click();
+}
+
+function importCSV(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
+    if(lines.length<1) return;
+    
+    document.querySelector('h1').innerText=lines[0].replace(/^"|"$/g,'').replace(/""/g,'"');
+    
+    let tableIndex=-1
