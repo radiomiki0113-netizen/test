@@ -164,7 +164,6 @@ button:active {
 
 <script>
 // 🚨 Local Storage 強制リセットコード (問題解決まで一時的に使用)
-// ブラウザに保存されている古いデータがCSVインポートを妨害するのを防ぎます
 if (localStorage.getItem('tableData')) {
     localStorage.removeItem('tableData');
     console.log("Local Storage data has been cleared."); 
@@ -184,9 +183,7 @@ function getTableBody(tableId) {
 
 // CSVデコードヘルパー関数
 const decodeCSVLine = (line) => {
-  // 正規表現を使ってダブルクォートで囲まれた部分を考慮しつつカンマで分割
   const cells = line.match(/(?:"[^"]*?"|[^,]+)/g) || [];
-  // 各セルからダブルクォートを削除し、エスケープされたダブルクォートを元に戻す
   return cells.map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());
 };
 
@@ -273,7 +270,8 @@ function removeCol(tableId){
 // ------------------------------------
 // 2. データ操作関数 
 // ------------------------------------
-function resetTables(){
+// 🔥 新設: データとDOMを初期化する核となる関数 (アラートなし)
+function resetData(){
   document.querySelector('h1').innerText = "就職活動 メモ";
   const defaultHeaders = {
     'table1': ['企業名', '業種', '選考状況', '次回予定'],
@@ -313,7 +311,12 @@ function resetTables(){
     });
   });
   localStorage.removeItem('tableData'); 
-  alert("テーブルとローカル保存データをリセットしました！");
+}
+
+// 🔥 修正: ユーザーが「全リセット」ボタンを押したときにのみアラートを出す
+function resetTables(){
+    resetData();
+    alert("テーブルとローカル保存データをリセットしました！");
 }
 
 function saveTables(){
@@ -398,9 +401,8 @@ window.onload=()=>{
 // 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
-  // 🔥 修正点: エクスポート直前に強制リセットをかけることで、
-  // Local StorageやDOMに残った不正なヘッダー情報を排除します。
-  resetTables();
+  // 🔥 修正: アラートの出ない resetData() を呼び出すように変更
+  resetData();
   
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
   const h3s=document.querySelectorAll('h3');
