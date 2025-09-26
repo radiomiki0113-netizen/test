@@ -456,6 +456,7 @@ function importCSV(event){
       let tbody = table.tBodies[0];
       if (!tbody) { tbody = table.createTBody(); }
       
+      // 🔥 修正点1: ヘッダーを読み込む前に、tbodyとtHeadをクリアする
       tbody.innerHTML = '';
       tHeadRow.innerHTML = '';
       
@@ -472,7 +473,6 @@ function importCSV(event){
       }
       
       // 4. データ行の復元
-      // lines[lineIndex]がデータ行（例: lines[4]）
       const expectedCols = tHeadRow.cells.length;
 
       while(lineIndex < lines.length && lines[lineIndex]){
