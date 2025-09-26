@@ -62,15 +62,14 @@ th {
   text-align: left;
 }
 
-/* 🚩 決定的な修正: tdの描画をFlexboxに置き換える */
+/* 🚩 tdの描画をFlexboxに置き換える */
 td {
   border: 1px solid var(--border-color); 
-  /* paddingをなくし、Flexboxでコンテンツを制御 */
   padding: 0; 
   white-space: normal;
   word-wrap: break-word;
   position: relative; /* inputの位置基準 */
-  height: 60px; /* 最小高さを確保 */
+  min-height: 60px; /* 最小高さを確保 */
   
   /* Flexboxでセル内のコンテンツを強制的に中央揃え */
   display: flex;
@@ -78,16 +77,20 @@ td {
   align-items: center; /* 垂直中央揃え */
 }
 
-/* 🚩 セル内のコンテナ（div）のスタイル */
+/* 🚩 決定的な修正: セル内のコンテナにハックを適用 */
 .cell-content-wrapper {
   /* Flexアイテムとして、コンテンツにフィットし、テキストを中央揃え */
-  text-align: center !important; 
   box-sizing: border-box;
-  /* 視覚的なpaddingをflexboxの子要素で実現 */
   padding: 12px 15px;
-  width: 100%; /* 横幅いっぱいにする */
+  width: 100%; 
   height: 100%;
-  display: block; /* テキストの折り返しのためblockに戻す */
+  
+  /* 🛑 最終ハック 🛑 */
+  /* 1. テキストを一行ブロックとして扱い、中央配置を安定させる */
+  display: inline-block; 
+  /* 2. ブラウザの折り返しルールを強制的に上書きし、中央揃えを優先させる */
+  white-space: pre-wrap !important; 
+  text-align: center !important; 
 }
 
 /* 🚩 編集用Input要素のスタイル */
@@ -234,7 +237,7 @@ if (localStorage.getItem('tableData')) {
 }
 
 // ------------------------------------
-// 🚩 核心となるセル操作関数 (Flexbox対応)
+// 🚩 核心となるセル操作関数 
 // ------------------------------------
 
 // H1/H3を編集可能にする関数
@@ -242,7 +245,6 @@ function makeEditableH3(element) {
     if (element.querySelector('input')) return;
 
     const originalText = element.innerText;
-    const originalDisplay = element.style.display;
     
     // 現在のテキストを非表示にする
     element.innerText = '';
@@ -255,7 +257,6 @@ function makeEditableH3(element) {
     input.onblur = function() {
         element.innerText = this.value;
         this.remove();
-        element.style.display = originalDisplay; // 元の表示形式に戻す
     };
 
     input.onkeydown = function(e) {
@@ -270,7 +271,6 @@ function makeEditableH3(element) {
 
 // セル内に<div>ラッパーを作成する関数
 function wrapContent(cell, text = '') {
-    // 既存のラッパーがあればそれを再利用
     let wrapper = cell.querySelector('.cell-content-wrapper');
     if (!wrapper) { 
         wrapper = document.createElement('div');
@@ -291,6 +291,8 @@ function setCellText(cell, text) {
     const wrapper = cell.querySelector('.cell-content-wrapper');
     if (wrapper) {
         wrapper.innerText = text;
+        // テキストを設定したらラッパーを再表示
+        wrapper.style.display = 'inline-block'; 
     } else {
         wrapContent(cell, text);
     }
@@ -300,10 +302,8 @@ function setCellText(cell, text) {
 function makeEditable(cell) {
     if (cell.querySelector('input')) return; 
 
-    // 元のテキストを取得
     const originalText = getCellText(cell);
     
-    // input要素を作成
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'cell-input';
@@ -313,7 +313,6 @@ function makeEditable(cell) {
         const newText = this.value;
         const parentCell = this.parentElement;
         
-        // テキストをtd内のラッパーに戻し、input要素を削除
         setCellText(parentCell, newText);
         this.remove(); 
     };
@@ -332,7 +331,7 @@ function makeEditable(cell) {
     input.focus(); 
 }
 
-// --- 補助関数 ---
+// --- 補助関数 (省略、前コードと共通) ---
 function getTableHeadCells(tableId) {
     const table = document.getElementById(tableId);
     if (table && table.tHead && table.tHead.rows.length > 0) {
@@ -351,7 +350,7 @@ const decodeCSVLine = (line) => {
 };
 
 // ------------------------------------
-// 1. テーブル操作関数 (Flexbox対応)
+// 1. テーブル操作関数 
 // ------------------------------------
 function addRow(tableId){
   const table = document.getElementById(tableId);
@@ -437,7 +436,6 @@ function removeCol(tableId){
 // 2. データ操作関数 
 // ------------------------------------
 function resetTables(){
-    // 見出しを初期化
     document.querySelector('h1').innerText = "就職活動 メモ";
     document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
     document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
@@ -450,7 +448,6 @@ function resetTables(){
     ['table1','table2'].forEach(id => {
         const table = document.getElementById(id);
         
-        // 1. TH（ヘッダーセル）を初期化
         let tHeadRow;
         if (table.tHead && table.tHead.rows.length > 0) {
             tHeadRow = table.tHead.rows[0];
@@ -466,7 +463,6 @@ function resetTables(){
             tHeadRow.appendChild(th);
         });
         
-        // 2. TBody（データ行）を初期化
         let tbody = table.tBodies[0];
         if (!tbody) { tbody = table.createTBody(); }
         tbody.innerHTML = '';
@@ -478,12 +474,11 @@ function resetTables(){
             wrapContent(cell); 
         }
     });
-    localStorage.removeItem('tableData'); // Local Storageもクリア
+    localStorage.removeItem('tableData'); 
 }
 
 function saveTables(){
   const data={};
-  // H1/H3はinnerTextで保存
   data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h3')).map(h=>h.innerText)];
   
   ['table1','table2'].forEach((id,index)=>{
@@ -497,7 +492,6 @@ function saveTables(){
     if (tbody) {
         for(let row of tbody.rows){
           const cells=[];
-          // getCellTextを使ってラッパー内の純粋なテキストを取得
           for(let cell of row.cells) cells.push(getCellText(cell)); 
           rows.push(cells);
         }
@@ -555,7 +549,7 @@ window.onload=()=>{
           rowData.forEach(cellVal => { 
               const cell = row.insertCell(); 
               cell.ondblclick = function() { makeEditable(this); }; 
-              setCellText(cell, cellVal); // ラッパー内にテキストを設定
+              setCellText(cell, cellVal); 
           });
       });
 
@@ -564,7 +558,7 @@ window.onload=()=>{
         headerData.forEach(() => { 
             const cell = row.insertCell(); 
             cell.ondblclick = function() { makeEditable(this); }; 
-            wrapContent(cell); // ラッパーを挿入
+            wrapContent(cell); 
         });
       }
     });
@@ -598,7 +592,6 @@ function exportCSV(){
     if (tbody) {
         for(let row of tbody.rows){
           let cells=[];
-          // getCellTextを使ってラッパー内の純粋なテキストを取得
           for(let cell of row.cells) cells.push(getCellText(cell).replace(/"/g,'""'));
           csv+='"' + cells.join('","') + '"\n';
         }
@@ -625,13 +618,11 @@ function importCSV(event){
     const h3s=document.querySelectorAll('h3');
     const tables=[document.getElementById('table1'), document.getElementById('table2')];
     
-    // H1のタイトルを処理
     if (lines[0]) {
         document.querySelector('h1').innerText = decodeCSVLine(lines[0])[0] || "就職活動 メモ";
         lineIndex++;
     }
 
-    // 空行をスキップ
     while (lineIndex < lines.length && lines[lineIndex].trim() === '') {
         lineIndex++;
     }
@@ -640,7 +631,6 @@ function importCSV(event){
       tableIndex++;
       const table = tables[tableIndex];
 
-      // H3のタイトルを処理
       if(h3s[tableIndex] && lines[lineIndex]) {
           const decodedLine = decodeCSVLine(lines[lineIndex]);
           
@@ -650,7 +640,6 @@ function importCSV(event){
           }
       }
       
-      // 空行をスキップ
       while (lineIndex < lines.length && lines[lineIndex].trim() === '') {
           lineIndex++;
       }
@@ -665,7 +654,6 @@ function importCSV(event){
       tbody.innerHTML = '';
       tHeadRow.innerHTML = '';
       
-      // ヘッダーを処理
       if(lineIndex < lines.length && lines[lineIndex]) {
           const headerCells = decodeCSVLine(lines[lineIndex]);
           headerCells.forEach(h => { 
@@ -679,11 +667,9 @@ function importCSV(event){
       
       const expectedCols = tHeadRow.cells.length;
 
-      // データを処理
       while(lineIndex < lines.length && lines[lineIndex]){
         const rowCells = decodeCSVLine(lines[lineIndex]);
         
-        // 次のH3タイトルや空行にぶつかったらループを抜ける
         if (rowCells.length === 1 && rowCells[0] !== "") {
             break;
         }
@@ -697,7 +683,7 @@ function importCSV(event){
             const cellVal = rowCells[i] ? rowCells[i] : ''; 
             
             cell.ondblclick = function() { makeEditable(this); }; 
-            setCellText(cell, cellVal); // ラッパー内にテキストを設定
+            setCellText(cell, cellVal); 
         }
         lineIndex++;
       }
