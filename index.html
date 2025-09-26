@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>就職活動 メモ</title>
 <style>
-/* 🎨 デザインCSS (修正なし) */
+/* 🎨 デザインCSS (中央揃えの優先度を修正) */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -58,14 +58,15 @@ th {
   position: sticky; 
   top: 0;
   z-index: 10;
-  text-align: left; 
+  text-align: left; /* ヘッダーセルは左揃えを維持 */
 }
 td[contenteditable="true"]:focus {
   background-color: #fffacd; 
   outline: 1px solid var(--primary-color);
 }
 td {
-  text-align: center; 
+  /* 🚩 修正点: !important を追加して、中央揃えを強制適用します */
+  text-align: center !important; 
 }
 
 .button-group {
@@ -110,7 +111,8 @@ button:active {
 </head>
 <body>
 
-<h1 >就職活動 メモ</h1><br>
+<h1>就職活動 メモ</h1>
+<br>
 
 <h3 contenteditable="true">動いている企業</h3>
 <table id="table1">
@@ -455,10 +457,7 @@ function importCSV(event){
     const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
     if(lines.length<1) return;
     
-    // 1. メインタイトルの復元 (H1は固定なので、CSVから読み込まず、HTML上の既存値を維持する)
-    // if (lines[0]) {
-    //     document.querySelector('h1').innerText = decodeCSVLine(lines[0])[0] || "就職活動 メモ";
-    // }
+    // H1は固定なので、CSVから読み込まず、HTML上の既存値を維持する
     
     let tableIndex=-1, lineIndex=1; // メインタイトル (0) の次の行から開始
 
