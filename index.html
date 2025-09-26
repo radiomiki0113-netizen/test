@@ -274,12 +274,14 @@ function removeCol(tableId){
 // 2. データ操作関数 
 // ------------------------------------
 
-// H3タイトルのみを修正し、TH（ヘッダーセル）は触らない関数
+// 💥 この関数を削除しました。exportCSVから呼び出されなくなり、編集が保持されます。
+/*
 function fixH3Titles(){
     document.querySelector('h1').innerText = "就職活動 メモ"; 
     document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
     document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
 }
+*/
 
 // データ行も含めて全てをリセットする核となる関数
 function resetData(){
@@ -334,6 +336,7 @@ function resetTables(){
 
 function saveTables(){
   const data={};
+  // H1, H3のテキストも保存する
   data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h3')).map(h=>h.innerText)];
   
   ['table1','table2'].forEach((id,index)=>{
@@ -362,7 +365,10 @@ window.onload=()=>{
   if(saved){
     const data=JSON.parse(saved);
     const texts=[document.querySelector('h1'), ...document.querySelectorAll('h3')];
-    data.texts.forEach((txt,i)=>{ if(texts[i]) texts[i].innerText=txt; });
+    data.texts.forEach((txt,i)=>{ 
+        // 読み込み時にH1, H3を復元
+        if(texts[i]) texts[i].innerText=txt; 
+    });
     
     ['table1','table2'].forEach((id,index)=>{
       const table=document.getElementById(id);
@@ -414,12 +420,14 @@ window.onload=()=>{
 // 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
-  // H3タイトルのみを修正し、TH（ヘッダーセル）の編集内容は維持する
-  fixH3Titles(); 
+  // 💥 fixH3Titles()の呼び出しを削除しました。これにより、H3の内容が元に戻らなくなります。
   
+  // H1の内容を取得
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
   const h3s=document.querySelectorAll('h3');
+  
   h3s.forEach((h,index)=>{
+    // H3の内容（編集後のサブタイトル）をそのままCSVに書き込む
     csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
     const table=document.getElementById('table'+(index+1));
     
@@ -513,18 +521,12 @@ function importCSV(event){
       while(lineIndex < lines.length && lines[lineIndex]){
         const rowCells = decodeCSVLine(lines[lineIndex]);
         
-        // 空行またはデータがない行を検出 (この時点でlinesは空行をフィルタリングしているため、基本的に次のテーブルのサブタイトル行に到達したらbreakするはず)
-        if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === "")) break; 
-        
-        // ヘッダーが一つしかないのに、データ行に複数のデータがある場合（=次のサブタイトル行）はbreak
+        // ヘッダーが一つしかないのに、データ行に複数のデータがある場合（=次のサブタイトル行である可能性が高い）はbreak
         if (expectedCols === 1 && rowCells.length > 1) break;
         
-        // 列数が合わない行はスキップ（データではないと判断）。ただし、列数が0の場合は無視（filter済み）
-        if (expectedCols > 0 && rowCells.length !== expectedCols) {
-             // 最初の列が空文字列で、かつデコード結果が1つだけの場合もブレイク（次のサブタイトルである可能性）
-            if (rowCells.length === 1 && rowCells[0] !== "") {
-                break;
-            }
+        // 最初の列が空文字列で、かつデコード結果が1つだけの場合もブレイク（次のサブタイトルである可能性）
+        if (rowCells.length === 1 && rowCells[0] !== "") {
+            break;
         }
 
         const row = tbody.insertRow();
