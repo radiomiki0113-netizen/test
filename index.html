@@ -9,7 +9,6 @@ h1 { font-size: 24px; }
 h3 { font-size: 18px; margin-top: 20px; font-weight: normal; }
 table { border-collapse: collapse; margin-bottom: 20px; width: 100%; table-layout: fixed; }
 th, td { border: 1px solid #000; padding: 8px; text-align: left; overflow: hidden; white-space: nowrap; }
-th { cursor: ew-resize; }
 button { margin: 3px; }
 </style>
 </head>
@@ -32,8 +31,6 @@ button { margin: 3px; }
     <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
   </tbody>
 </table>
-
-<br>
 
 <h3 contenteditable="true">2段目の表用サブタイトル</h3>
 <table id="table2">
@@ -69,7 +66,6 @@ button { margin: 3px; }
 </div>
 
 <script>
-/* --- 行・列操作 --- */
 function addRow(tableId){
   const tbody=document.getElementById(tableId).tBodies[0];
   const cols=tbody.rows[0]?tbody.rows[0].cells.length:1;
@@ -83,9 +79,8 @@ function removeRow(tableId){
 function addCol(tableId){
   const tbody=document.getElementById(tableId).tBodies[0];
   const ths=document.getElementById(tableId).tHead.rows[0];
-  const th=document.createElement('th'); th.innerText=`列${ths.cells.length+1}`; th.style.width='100px'; th.contentEditable="true"; ths.appendChild(th);
+  const th=document.createElement('th'); th.innerText=`列${ths.cells.length+1}`; th.contentEditable="true"; ths.appendChild(th);
   for(let row of tbody.rows){ const cell=row.insertCell(); cell.contentEditable="true"; }
-  makeWidthEditable(document.getElementById(tableId));
 }
 function removeCol(tableId){
   const tbody=document.getElementById(tableId).tBodies[0];
@@ -93,7 +88,6 @@ function removeCol(tableId){
   if(ths.cells.length>1){ ths.deleteCell(-1); for(let row of tbody.rows) row.deleteCell(-1); }
 }
 
-/* --- リセット --- */
 function resetTables(){
   ['table1','table2'].forEach(id=>{
     const table=document.getElementById(id);
@@ -103,15 +97,13 @@ function resetTables(){
     for(let i=0;i<cols;i++){ const cell=row.insertCell(); cell.contentEditable="true"; }
   });
   localStorage.removeItem('tableData'); 
-  localStorage.removeItem('tableWidths'); 
 }
 
-/* --- 保存・復元 --- */
 function saveTables(){
   const data={};
-  const elements=[document.querySelector('h1'), ...document.querySelectorAll('h3')];
-  data['texts']=elements.map(el=>el.innerText);
-  document.querySelectorAll('table').forEach((table,index)=>{
+  data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h3')).map(h=>h.innerText)];
+  ['table1','table2'].forEach((id,index)=>{
+    const table=document.getElementById(id);
     const rows=[];
     for(let row of table.rows){
       const cells=[];
@@ -121,13 +113,6 @@ function saveTables(){
     data['table'+(index+1)]=rows;
   });
   localStorage.setItem('tableData',JSON.stringify(data));
-
-  const widths={};
-  ['table1','table2'].forEach(id=>{
-    const ths=document.getElementById(id).tHead.rows[0].cells;
-    widths[id]=Array.from(ths).map(th=>th.offsetWidth);
-  });
-  localStorage.setItem('tableWidths',JSON.stringify(widths));
   alert("保存しました！");
 }
 
@@ -154,24 +139,10 @@ window.onload=()=>{
       }
     }
   }
+}
 
-  const widthsSaved=localStorage.getItem('tableWidths');
-  if(widthsSaved){
-    const widths=JSON.parse(widthsSaved);
-    ['table1','table2'].forEach(id=>{
-      const ths=document.getElementById(id).tHead.rows[0].cells;
-      widths[id].forEach((w,i)=>{ if(ths[i]) ths[i].style.width=w+'px'; });
-    });
-  }
-
-  makeWidthEditable(document.getElementById('table1'));
-  makeWidthEditable(document.getElementById('table2'));
-};
-
-/* --- CSV --- */
 function exportCSV(){
-  let csv='';
-  csv+='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
+  let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
   const h3s=document.querySelectorAll('h3');
   h3s.forEach((h,index)=>{
     csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
@@ -192,50 +163,34 @@ function importCSV(event){
   if(!file) return;
   const reader=new FileReader();
   reader.onload=e=>{
-    const lines=e.target.result.split('\n');
-    let mode='h1'; // 'h1','h3','table'
-    let currentTable=null;
+    const lines=e.target.result.split('\n').map(l=>l.trim()).filter(l=>l!=='');
+    if(lines.length<1) return;
+    document.querySelector('h1').innerText=lines[0].replace(/^"|"$/g,'').replace(/""/g,'"');
     let tableIndex=-1;
-    lines.forEach(raw=>{
-      let line=raw.trim();
-      if(line==='') return;
+    let mode='h3';
+    lines.slice(1).forEach(line=>{
       line=line.replace(/^"|"$/g,'').replace(/""/g,'"');
-
-      if(mode==='h1'){
-        document.querySelector('h1').innerText=line;
-        mode='h3';
-      } else if(mode==='h3'){
+      if(mode==='h3'){
         tableIndex++;
         const h3s=document.querySelectorAll('h3');
         if(h3s[tableIndex]) h3s[tableIndex].innerText=line;
-        currentTable=document.getElementById('table'+(tableIndex+1));
-        currentTable.tHead.innerHTML=''; currentTable.tBodies[0].innerHTML='';
+        const table=document.getElementById('table'+(tableIndex+1));
+        table.tHead.innerHTML=''; table.tBodies[0].innerHTML='';
         mode='table';
-        return;
       } else if(mode==='table'){
-        if(line.startsWith('Table') || tableIndex>=2) return;
+        const table=document.getElementById('table'+(tableIndex+1));
         const cells=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
-        if(currentTable.tHead.rows.length===0){
-          const row=currentTable.tHead.insertRow();
+        if(table.tHead.rows.length===0){
+          const row=table.tHead.insertRow();
           cells.forEach(c=>{ const th=document.createElement('th'); th.contentEditable="true"; th.innerText=c; row.appendChild(th); });
         } else {
-          const row=currentTable.tBodies[0].insertRow();
+          const row=table.tBodies[0].insertRow();
           cells.forEach(c=>{ const td=row.insertCell(); td.contentEditable="true"; td.innerText=c; });
         }
       }
     });
   };
   reader.readAsText(file);
-}
-
-/* --- iPhone列幅長押し --- */
-function makeWidthEditable(table){
-  const cols=table.querySelectorAll('th');
-  cols.forEach(th=>{
-    let startX=0, startWidth=0;
-    th.addEventListener('touchstart',e=>{ startX=e.touches[0].clientX; startWidth=th.offsetWidth; });
-    th.addEventListener('touchmove',e=>{ const dx=e.touches[0].clientX-startX; th.style.width=(startWidth+dx)+'px'; });
-  });
 }
 </script>
 </body>
