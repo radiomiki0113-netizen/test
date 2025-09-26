@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>就職活動メモ 完全版（ヘッダ編集可）</title>
+<title>就職活動メモ 完全版（列幅保存対応）</title>
 <style>
 body { font-family: Arial, sans-serif; padding: 20px; }
 h1 { font-size: 24px; }
@@ -47,10 +47,19 @@ button { margin: 3px; }
 </table>
 
 <div>
-  <button onclick="addRow('table1'); addRow('table2')">行追加（両表）</button>
-  <button onclick="removeRow('table1'); removeRow('table2')">行削除（両表）</button>
-  <button onclick="addCol('table1'); addCol('table2')">列追加（両表）</button>
-  <button onclick="removeCol('table1'); removeCol('table2')">列削除（両表）</button>
+  <strong>1段目操作:</strong>
+  <button onclick="addRow('table1')">行追加</button>
+  <button onclick="removeRow('table1')">行削除</button>
+  <button onclick="addCol('table1')">列追加</button>
+  <button onclick="removeCol('table1')">列削除</button>
+
+  <strong>2段目操作:</strong>
+  <button onclick="addRow('table2')">行追加</button>
+  <button onclick="removeRow('table2')">行削除</button>
+  <button onclick="addCol('table2')">列追加</button>
+  <button onclick="removeCol('table2')">列削除</button>
+
+  <strong>共通操作:</strong>
   <button onclick="resetTables()">リセット</button>
   <button onclick="saveTables()">保存</button>
   <button onclick="exportCSV()">CSVとして保存</button>
@@ -66,10 +75,32 @@ function addCol(tableId){ const tbody=document.getElementById(tableId).tBodies[0
 function removeCol(tableId){ const tbody=document.getElementById(tableId).tBodies[0]; const ths=document.getElementById(tableId).tHead.rows[0]; if(ths.cells.length>1){ ths.deleteCell(-1); for(let row of tbody.rows) row.deleteCell(-1); } }
 
 /* --- リセット --- */
-function resetTables(){ ['table1','table2'].forEach(id=>{ const table=document.getElementById(id); table.tBodies[0].innerHTML=''; const cols=table.tHead.rows[0].cells.length; const row=table.tBodies[0].insertRow(); for(let i=0;i<cols;i++){ const cell=row.insertCell(); cell.contentEditable="true"; } }); localStorage.removeItem('tableData'); }
+function resetTables(){ ['table1','table2'].forEach(id=>{ const table=document.getElementById(id); table.tBodies[0].innerHTML=''; const cols=table.tHead.rows[0].cells.length; const row=table.tBodies[0].insertRow(); for(let i=0;i<cols;i++){ const cell=row.insertCell(); cell.contentEditable="true"; } }); localStorage.removeItem('tableData'); localStorage.removeItem('tableWidths'); }
 
 /* --- 保存・復元 --- */
-function saveTables(){ const data={}; document.querySelectorAll('table').forEach((table,index)=>{ const rows=[]; for(let row of table.rows){ const cells=[]; for(let cell of row.cells) cells.push(cell.innerText); rows.push(cells); } data['table'+(index+1)]=rows; }); localStorage.setItem('tableData',JSON.stringify(data)); alert("保存しました！"); }
+function saveTables(){
+  const data={};
+  document.querySelectorAll('table').forEach((table,index)=>{
+    const rows=[];
+    for(let row of table.rows){
+      const cells=[];
+      for(let cell of row.cells) cells.push(cell.innerText);
+      rows.push(cells);
+    }
+    data['table'+(index+1)]=rows;
+  });
+  localStorage.setItem('tableData',JSON.stringify(data));
+
+  // 列幅保存
+  const widths={};
+  ['table1','table2'].forEach(id=>{
+    const ths=document.getElementById(id).tHead.rows[0].cells;
+    widths[id]=Array.from(ths).map(th=>th.offsetWidth);
+  });
+  localStorage.setItem('tableWidths',JSON.stringify(widths));
+  alert("保存しました！");
+}
+
 window.onload=()=>{
   const saved=localStorage.getItem('tableData');
   if(saved){
@@ -85,6 +116,17 @@ window.onload=()=>{
       });
     }
   }
+
+  // 列幅復元
+  const widthsSaved=localStorage.getItem('tableWidths');
+  if(widthsSaved){
+    const widths=JSON.parse(widthsSaved);
+    ['table1','table2'].forEach(id=>{
+      const ths=document.getElementById(id).tHead.rows[0].cells;
+      widths[id].forEach((w,i)=>{ if(ths[i]) ths[i].style.width=w+'px'; });
+    });
+  }
+
   makeWidthEditable(document.getElementById('table1'));
   makeWidthEditable(document.getElementById('table2'));
 };
@@ -94,7 +136,20 @@ function exportCSV(){ let csv=''; document.querySelectorAll('table').forEach((ta
 function importCSV(event){ const file=event.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ const text=e.target.result; const sections=text.split(/Table\d+\n/).filter(s=>s.trim()!==''); sections.forEach((section,index)=>{ const rows=section.trim().split("\n").filter(r=>r.trim()!==''); const table=document.getElementById('table'+(index+1)); const tbody=table.tBodies[0]; tbody.innerHTML=''; rows.forEach(rowText=>{ const row=tbody.insertRow(); const cells=rowText.split(',').map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"')); cells.forEach(cellData=>{ const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=cellData; }); }); }); }; reader.readAsText(file); }
 
 /* --- iPhone用 長押しで列幅変更 --- */
-function makeWidthEditable(table){ const cols=table.querySelectorAll('th'); cols.forEach(col=>{ col.addEventListener('touchstart',function(e){ if(this.timeout) clearTimeout(this.timeout); this.timeout=setTimeout(()=>{ const currentWidth=col.offsetWidth; const newWidth=prompt('列幅をpxで入力してください',currentWidth); if(newWidth && !isNaN(newWidth)) col.style.width=newWidth+'px'; },600); }); col.addEventListener('touchend',function(){ if(this.timeout) clearTimeout(this.timeout); }); }); }
+function makeWidthEditable(table){
+  const cols=table.querySelectorAll('th');
+  cols.forEach(col=>{
+    col.addEventListener('touchstart',function(e){
+      if(this.timeout) clearTimeout(this.timeout);
+      this.timeout=setTimeout(()=>{
+        const currentWidth=col.offsetWidth;
+        const newWidth=prompt('列幅をpxで入力してください',currentWidth);
+        if(newWidth && !isNaN(newWidth)) col.style.width=newWidth+'px';
+      },600);
+    });
+    col.addEventListener('touchend',function(){ if(this.timeout) clearTimeout(this.timeout); });
+  });
+}
 </script>
 </body>
 </html>
