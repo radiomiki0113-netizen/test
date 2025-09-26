@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>就職活動 メモ（完全版）</title>
+  <title>就職活動 メモ</title>
   <style>
     body { font-family: sans-serif; margin: 20px; }
     h1 { font-size: 2em; margin-bottom: 5px; }
     .subtitle { font-size: 1em; color: #555; margin-top: 0; margin-bottom: 10px; }
     .table-container { display: block; margin-bottom: 30px; }
     table { border-collapse: collapse; margin: 10px 0; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 5px; min-width: 80px; }
+    th, td { border: 1px solid #ccc; padding: 5px; min-width: 80px; text-align: left; }
     th { background: #eee; }
     td { background: #fcfcf5; }
     button, label[for="csvFileInput"] {
@@ -23,39 +23,41 @@
 </head>
 <body>
 
+  <!-- ページ最上部タイトル -->
   <h1>就職活動 メモ</h1>
+  <br>
 
   <!-- 1段目の表 -->
   <p class="subtitle">動いている企業</p>
   <div class="table-container">
     <table id="sheet1">
       <thead>
-        <tr id="header1"><th>番号</th><th>企業名</th><th>求人サイト</th><th>メモ1</th><th>メモ2</th></tr>
+        <tr id="header1"></tr>
       </thead>
       <tbody>
-        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+        <tr></tr>
       </tbody>
     </table>
   </div>
 
   <!-- 2段目の表 -->
-  <p class="subtitle">その他の情報</p>
+  <p class="subtitle">2段目の表用サブタイトル</p>
   <div class="table-container">
     <table id="sheet2">
       <thead>
-        <tr id="header2"><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+        <tr id="header2"></tr>
       </thead>
       <tbody>
-        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+        <tr></tr>
       </tbody>
     </table>
   </div>
 
   <!-- ボタン群 -->
-  <button onclick="addRow1()">1段目に行追加</button>
-  <button onclick="addRow2()">2段目に行追加</button>
-  <button onclick="addColumn1()">1段目に列追加</button>
-  <button onclick="addColumn2()">2段目に列追加</button>
+  <button onclick="addRow(0)">1段目に行追加</button>
+  <button onclick="addColumn(0)">1段目に列追加</button>
+  <button onclick="addRow(1)">2段目に行追加</button>
+  <button onclick="addColumn(1)">2段目に列追加</button>
   <button onclick="saveTable()">保存</button>
   <button onclick="downloadCSV()">CSVとして保存</button>
   <label for="csvFileInput">CSVを読み込む</label>
@@ -64,13 +66,13 @@
 
   <script>
     const tables = [
-      {tbody: document.getElementById("sheet1").getElementsByTagName("tbody")[0], header: document.getElementById("header1")},
-      {tbody: document.getElementById("sheet2").getElementsByTagName("tbody")[0], header: document.getElementById("header2")}
+      { tbody: document.querySelector("#sheet1 tbody"), header: document.getElementById("header1"), table: document.getElementById("sheet1") },
+      { tbody: document.querySelector("#sheet2 tbody"), header: document.getElementById("header2"), table: document.getElementById("sheet2") }
     ];
 
-    function addRow1() { addRow(tables[0]); }
-    function addRow2() { addRow(tables[1]); }
-    function addRow(t) {
+    // 行追加
+    function addRow(index) {
+      let t = tables[index];
       let row = t.tbody.insertRow();
       for (let i = 0; i < t.header.cells.length; i++) {
         let cell = row.insertCell();
@@ -78,45 +80,56 @@
       }
     }
 
-    function addColumn1() { addColumn(tables[0]); }
-    function addColumn2() { addColumn(tables[1]); }
-    function addColumn(t) {
-      let colIndex = t.header.cells.length;
+    // 列追加
+    function addColumn(index) {
+      let t = tables[index];
+      let colName = prompt("列名を入力してください", "新しい列");
+      if (!colName) return;
       let th = document.createElement("th");
-      // 既存ヘッダー文字がアルファベットか日本語か判断して適切に表示
-      if (/^[A-Z]+$/.test(t.header.cells[0].innerText)) {
-        th.textContent = String.fromCharCode(65 + colIndex); // A,B,C...
-      } else {
-        th.textContent = "列" + (colIndex + 1); // 日本語列名
-      }
+      th.textContent = colName;
       t.header.appendChild(th);
+
       for (let i = 0; i < t.tbody.rows.length; i++) {
         let cell = t.tbody.rows[i].insertCell();
         cell.contentEditable = "true";
       }
     }
 
+    // 保存
     function saveTable() {
       tables.forEach((t,i)=>{
-        let data = [];
+        let data = {
+          headers: [],
+          rows: []
+        };
+        for(let c=0;c<t.header.cells.length;c++){
+          data.headers.push(t.header.cells[c].innerText);
+        }
         for(let r=0;r<t.tbody.rows.length;r++){
           let row=[];
           for(let c=0;c<t.tbody.rows[r].cells.length;c++){
             row.push(t.tbody.rows[r].cells[c].innerText);
           }
-          data.push(row);
+          data.rows.push(row);
         }
         localStorage.setItem("myTable"+(i+1), JSON.stringify(data));
       });
       alert("保存しました！");
     }
 
+    // 読み込み
     window.onload = function() {
       tables.forEach((t,i)=>{
-        let data = JSON.parse(localStorage.getItem("myTable"+(i+1)) || "[]");
-        if(data.length>0){
+        let saved = JSON.parse(localStorage.getItem("myTable"+(i+1)) || "null");
+        if(saved){
+          t.header.innerHTML="";
+          saved.headers.forEach(h=>{
+            let th=document.createElement("th");
+            th.textContent=h;
+            t.header.appendChild(th);
+          });
           t.tbody.innerHTML="";
-          data.forEach(r=>{
+          saved.rows.forEach(r=>{
             let row=t.tbody.insertRow();
             r.forEach(val=>{
               let cell=row.insertCell();
@@ -128,50 +141,67 @@
       });
     }
 
+    // CSV保存（1段目と2段目をまとめて保存）
     function downloadCSV() {
+      let csv = [];
       tables.forEach((t,i)=>{
-        let csv=[];
+        let headers = [];
+        for(let c=0;c<t.header.cells.length;c++){
+          headers.push('"' + t.header.cells[c].innerText.replace(/"/g, '""') + '"');
+        }
+        csv.push(headers.join(","));
         for(let r=0;r<t.tbody.rows.length;r++){
           let row=[];
           for(let c=0;c<t.tbody.rows[r].cells.length;c++){
-            row.push('"'+t.tbody.rows[r].cells[c].innerText.replace(/"/g,'""')+'"');
+            row.push('"' + t.tbody.rows[r].cells[c].innerText.replace(/"/g, '""') + '"');
           }
           csv.push(row.join(","));
         }
-        let blob=new Blob([csv.join("\n")],{type:"text/csv"});
-        let link=document.createElement("a");
-        link.href=URL.createObjectURL(blob);
-        link.download="table"+(i+1)+".csv";
-        link.click();
+        csv.push(""); // 段落分け
       });
+      let blob = new Blob([csv.join("\n")], { type: "text/csv" });
+      let link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "table.csv";
+      link.click();
     }
 
+    // CSV読み込み（1つ目の表に反映）
     function uploadCSV(event) {
-      let file=event.target.files[0];
-      if(!file) return;
-      let reader=new FileReader();
-      reader.onload=function(e){
-        let rows=e.target.result.split("\n").map(r=>r.split(","));
-        tables.forEach(t=>{ t.tbody.innerHTML=""; });
-        rows.forEach(r=>{
-          tables.forEach(t=>{
-            let row=t.tbody.insertRow();
-            r.forEach(val=>{
-              let cell=row.insertCell();
-              cell.contentEditable="true";
-              cell.innerText=val.replace(/^"|"$/g,'').replace(/""/g,'"');
-            });
-          });
+      let file = event.target.files[0];
+      if (!file) return;
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        let rows = e.target.result.split("\n").map(r => r.split(","));
+        let t = tables[0];
+        t.header.innerHTML="";
+        let headerRow = rows[0];
+        headerRow.forEach(h=>{
+          let th=document.createElement("th");
+          th.textContent=h.replace(/^"|"$/g, '').replace(/""/g, '"');
+          t.header.appendChild(th);
         });
+        t.tbody.innerHTML="";
+        for(let r=1;r<rows.length;r++){
+          if(rows[r].length===1 && rows[r][0]==="") continue;
+          let row=t.tbody.insertRow();
+          rows[r].forEach(val=>{
+            let cell=row.insertCell();
+            cell.contentEditable="true";
+            cell.innerText=val.replace(/^"|"$/g, '').replace(/""/g, '"');
+          });
+        }
       };
       reader.readAsText(file);
     }
 
+    // リセット
     function resetTable() {
       tables.forEach(t=>{
-        t.tbody.innerHTML="<tr><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
+        t.header.innerHTML="";
+        t.tbody.innerHTML="<tr></tr>";
       });
-      tables.forEach((t,i)=>{ localStorage.removeItem("myTable"+(i+1)); });
+      localStorage.clear();
     }
   </script>
 </body>
