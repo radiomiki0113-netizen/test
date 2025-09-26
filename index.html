@@ -163,9 +163,7 @@ button:active {
 </div>
 
 <script>
-// --- JS関数の最終修正版 ---
-
-// 補助関数
+// --- 補助関数 ---
 function getTableHeadCells(tableId) {
     const table = document.getElementById(tableId);
     if (table && table.tHead && table.tHead.rows.length > 0) {
@@ -174,28 +172,29 @@ function getTableHeadCells(tableId) {
     return [];
 }
 function getTableBody(tableId) {
-    // tBodies[0]が存在しない場合もあるため、この関数はあまり使用せず、必要な場所で直接チェックすることが望ましい
     return document.getElementById(tableId).tBodies[0];
 }
 
+// CSVデコードヘルパー関数
+const decodeCSVLine = (line) => {
+  // 正規表現を使ってダブルクォートで囲まれた部分を考慮しつつカンマで分割
+  const cells = line.match(/(?:"[^"]*?"|[^,]+)/g) || [];
+  // 各セルからダブルクォートを削除し、エスケープされたダブルクォートを元に戻す
+  return cells.map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());
+};
+
 // ------------------------------------
-// 1. テーブル操作関数
+// 1. テーブル操作関数 (前回確認済み)
 // ------------------------------------
 function addRow(tableId){
   const table = document.getElementById(tableId);
-  // tbodyの存在チェックと作成
   let tbody = table.tBodies[0];
-  if (!tbody) {
-      tbody = table.createTBody();
-  }
+  if (!tbody) { tbody = table.createTBody(); }
 
   const headCells = getTableHeadCells(tableId);
   const cols = headCells.length;
   
-  if (cols === 0) {
-      alert("先に列（ヘッダー）を追加してください。");
-      return; 
-  }
+  if (cols === 0) { alert("先に列（ヘッダー）を追加してください。"); return; }
 
   const row = tbody.insertRow();
   for(let i=0; i<cols; i++){ 
@@ -206,7 +205,7 @@ function addRow(tableId){
 
 function removeRow(tableId){
   const tbody = getTableBody(tableId);
-  if (!tbody) return; // tbodyがない場合は何もしない
+  if (!tbody) return; 
 
   if(tbody.rows.length > 1) {
     tbody.deleteRow(-1);
@@ -217,12 +216,8 @@ function removeRow(tableId){
 
 function addCol(tableId){
   const table = document.getElementById(tableId);
-  
-  // tbodyの存在チェックと作成
   let tbody = table.tBodies[0];
-  if (!tbody) {
-      tbody = table.createTBody();
-  }
+  if (!tbody) { tbody = table.createTBody(); }
   
   let tHeadRow;
   if (table.tHead && table.tHead.rows.length > 0) {
@@ -269,7 +264,7 @@ function removeCol(tableId){
 }
 
 // ------------------------------------
-// 2. データ操作関数 (resetTablesを修正)
+// 2. データ操作関数 (前回確認済み)
 // ------------------------------------
 function resetTables(){
   document.querySelector('h1').innerText = "就職活動 メモ";
@@ -284,13 +279,9 @@ function resetTables(){
   ['table1','table2'].forEach(id => {
     const table = document.getElementById(id);
     
-    // 🔥 修正点: tBodyの存在を確実にチェックし、なければ作成する
     let tbody = table.tBodies[0];
-    if (!tbody) {
-        tbody = table.createTBody();
-    }
+    if (!tbody) { tbody = table.createTBody(); }
     
-    // Header row creation logic (robust)
     let tHeadRow;
     if (table.tHead && table.tHead.rows.length > 0) {
         tHeadRow = table.tHead.rows[0];
@@ -299,7 +290,6 @@ function resetTables(){
         tHeadRow = table.tHead.insertRow();
     }
     
-    // Header reset
     tHeadRow.innerHTML = '';
     defaultHeaders[id].forEach(headerText => {
       const th = document.createElement('th');
@@ -308,7 +298,6 @@ function resetTables(){
       tHeadRow.appendChild(th);
     });
 
-    // Data reset
     tbody.innerHTML = '';
     const row = tbody.insertRow();
     defaultHeaders[id].forEach(() => {
@@ -362,9 +351,7 @@ window.onload=()=>{
       const tHeadRow=table.tHead.rows[0];
       
       let tbody = table.tBodies[0];
-      if (!tbody) {
-          tbody = table.createTBody();
-      }
+      if (!tbody) { tbody = table.createTBody(); }
       
       const allRows=data['table'+(index+1)]; 
 
@@ -401,7 +388,7 @@ window.onload=()=>{
 }
 
 // ------------------------------------
-// 3. CSV操作関数 (exportCSV/importCSV 動作確認済み)
+// 3. CSV操作関数 (exportCSV動作確認済み)
 // ------------------------------------
 function exportCSV(){
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
@@ -427,6 +414,9 @@ function exportCSV(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='job_search_memo.csv'; a.click();
 }
 
+// ------------------------------------
+// 4. CSVインポート修正版 (データ行のズレを修正)
+// ------------------------------------
 function importCSV(event){
   const file=event.target.files[0];
   if(!file) return;
@@ -436,16 +426,13 @@ function importCSV(event){
     const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
     if(lines.length<1) return;
     
-    const decodeCSVLine = (line) => {
-      const cells = line.match(/(?:"[^"]*?"|[^,]+)/g) || [];
-      return cells.map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());
-    };
-
+    // 1. メインタイトルの復元
     if (lines[0]) {
         document.querySelector('h1').innerText = decodeCSVLine(lines[0])[0] || "就職活動 メモ";
     }
     
-    let tableIndex=-1, lineIndex=2;
+    // 処理開始行を3行目（lines[2]）からにする
+    let tableIndex=-1, lineIndex=2; 
 
     const h3s=document.querySelectorAll('h3');
     const tables=[document.getElementById('table1'), document.getElementById('table2')];
@@ -454,10 +441,11 @@ function importCSV(event){
       tableIndex++;
       if(!tables[tableIndex]) break;
       
+      // 2. サブタイトルの復元 (lines[lineIndex]、例: lines[2], lines[8])
       if(h3s[tableIndex] && lines[lineIndex]) {
           h3s[tableIndex].innerText = decodeCSVLine(lines[lineIndex])[0] || "テーブルタイトル";
       }
-      lineIndex++;
+      lineIndex++; // lines[3], lines[9]へ
 
       const table = tables[tableIndex];
       // tHead/tBodyの存在チェックと作成
@@ -466,13 +454,12 @@ function importCSV(event){
       const tHeadRow = table.tHead.rows[0];
       
       let tbody = table.tBodies[0];
-      if (!tbody) {
-          tbody = table.createTBody();
-      }
+      if (!tbody) { tbody = table.createTBody(); }
       
       tbody.innerHTML = '';
       tHeadRow.innerHTML = '';
       
+      // 3. ヘッダー行の復元 (lines[lineIndex]、例: lines[4], lines[10])
       if(lineIndex < lines.length && lines[lineIndex]) {
           const headerCells = decodeCSVLine(lines[lineIndex]);
           headerCells.forEach(h => { 
@@ -481,13 +468,24 @@ function importCSV(event){
               th.innerText = h;
               tHeadRow.appendChild(th);
           });
-          lineIndex++;
+          lineIndex++; // lines[5], lines[11]へ
       }
       
+      // 4. データ行の復元
+      // lines[lineIndex]がデータ行（例: lines[5]）
       while(lineIndex < lines.length && lines[lineIndex]){
         const rowCells = decodeCSVLine(lines[lineIndex]);
         
+        // データがない、または空行（テーブル間の区切り）と判断
         if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === "")) break; 
+        
+        // 🚨 修正のポイント: ヘッダーの列数とインポートしたセルの数が合わない場合、エラーを防ぐためスキップ
+        const expectedCols = tHeadRow.cells.length;
+        if (rowCells.length !== expectedCols) {
+            console.warn(`Skipping row due to column mismatch (Expected: ${expectedCols}, Found: ${rowCells.length}): ${lines[lineIndex]}`);
+            lineIndex++;
+            continue; 
+        }
 
         const row = tbody.insertRow();
         rowCells.forEach(c=>{ 
@@ -497,7 +495,7 @@ function importCSV(event){
         });
         lineIndex++;
       }
-      lineIndex++;
+      lineIndex++; // 次のテーブルのサブタイトルへ
     }
     alert("CSVファイルをインポートしました！");
   };
