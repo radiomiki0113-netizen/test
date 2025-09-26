@@ -456,7 +456,7 @@ function importCSV(event){
       let tbody = table.tBodies[0];
       if (!tbody) { tbody = table.createTBody(); }
       
-      // 🔥 修正点1: ヘッダーを読み込む前に、tbodyとtHeadをクリアする
+      // ヘッダーを読み込む前に、tbodyとtHeadをクリアする
       tbody.innerHTML = '';
       tHeadRow.innerHTML = '';
       
