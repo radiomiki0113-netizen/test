@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>就職活動 メモ</title>
 <style>
-/* 🎨 デザインCSS (全tdに対する!importantは維持) */
+/* 🎨 デザインCSS (中央揃えのCSS指定は念のため全て維持) */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -65,7 +65,7 @@ td[contenteditable="true"]:focus {
   outline: 1px solid var(--primary-color);
 }
 
-/* CSSでの強制は最後の手段として残しますが、JSで決定打を打ちます */
+/* CSSでの強制も一応維持 */
 td {
   text-align: center !important; 
 }
@@ -127,10 +127,10 @@ button:active {
   </thead>
   <tbody>
     <tr>
-        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
-        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
-        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
-        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
     </tr>
   </tbody>
 </table>
@@ -154,10 +154,10 @@ button:active {
   </thead>
   <tbody>
     <tr>
-        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
-        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
-        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
-        <td contenteditable="true" style="text-align: center;" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
     </tr>
   </tbody>
 </table>
@@ -184,10 +184,20 @@ if (localStorage.getItem('tableData')) {
     console.log("Local Storage data has been cleared."); 
 }
 
-// 🚩 決定打となるJavaScript関数
+// 🚩 決定打となるJavaScript関数 (HTMLタグで強制)
 function enforceCenter(cell) {
-    // セルからフォーカスが外れた（編集が終わった）瞬間に、中央揃えを上書きする
-    cell.style.textAlign = 'center';
+    const text = cell.innerText.trim();
+    
+    // テキストが存在し、かつ既に<center>で囲まれていない場合のみ処理
+    if (text !== '' && !cell.innerHTML.toLowerCase().includes('<center>')) {
+        // セルの内容を<center>タグで囲んで強制的に中央揃えにする
+        cell.innerHTML = '<center>' + text + '</center>';
+    } else if (text === '') {
+        // 内容が空になった場合は、<center>タグを削除して空の状態に戻す
+        cell.innerHTML = '';
+    }
+    // contenteditableのセルを編集すると、ブラウザが勝手にdivやbrを挿入する場合があるので、
+    // HTMLの検証が面倒になるため、今回はHTMLタグを使いテキストのみを操作する
 }
 
 
@@ -210,7 +220,7 @@ const decodeCSVLine = (line) => {
 };
 
 // ------------------------------------
-// 1. テーブル操作関数 (中央揃えの処理を追加)
+// 1. テーブル操作関数 
 // ------------------------------------
 function addRow(tableId){
   const table = document.getElementById(tableId);
@@ -227,7 +237,6 @@ function addRow(tableId){
     const cell=row.insertCell(); 
     cell.contentEditable="true"; 
     // 🚨 修正: 行追加時
-    cell.style.textAlign = "center";
     cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
   }
 }
@@ -265,7 +274,6 @@ function addCol(tableId){
     const cell=row.insertCell(); 
     cell.contentEditable="true"; 
     // 🚨 修正: 列追加時
-    cell.style.textAlign = "center";
     cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
   }
   
@@ -273,13 +281,12 @@ function addCol(tableId){
       const row = tbody.insertCell();
       const cell = row.insertCell(); 
       cell.contentEditable="true";
-      cell.style.textAlign = "center"; 
       cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
   }
 }
 
 // ------------------------------------
-// 2. データ操作関数 (中央揃えの処理を追加)
+// 2. データ操作関数 
 // ------------------------------------
 function resetData(){
     // 見出しを初期化
@@ -321,7 +328,6 @@ function resetData(){
             const cell = row.insertCell(); 
             cell.contentEditable = "true"; 
             // 🚨 修正: リセット時
-            cell.style.textAlign = "center";
             cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
         }
     });
@@ -329,8 +335,8 @@ function resetData(){
 }
 
 function saveTables(){
-    // 既存の保存ロジック（中央揃えの強制は不要）
     const data={};
+    // H1, H3のテキストも保存する (セルの内容自体はinnerTextで保存)
     data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h3')).map(h=>h.innerText)];
     
     ['table1','table2'].forEach((id,index)=>{
@@ -344,7 +350,8 @@ function saveTables(){
         if (tbody) {
             for(let row of tbody.rows){
             const cells=[];
-            for(let cell of row.cells) cells.push(cell.innerText);
+            // セルから純粋なテキストを取り出すためにinnerTextを使う
+            for(let cell of row.cells) cells.push(cell.innerText); 
             rows.push(cells);
             }
         }
@@ -360,6 +367,10 @@ window.onload=()=>{
   // 🚨 既存の初期設定HTML要素にJSイベントリスナーを付与
   document.querySelectorAll('td[contenteditable="true"]').forEach(cell => {
     cell.onblur = function() { enforceCenter(this); };
+    // 初期表示時に内容が空でなければ、強制的に中央揃えにする
+    if (cell.innerText.trim() !== '') {
+        enforceCenter(cell);
+    }
   });
 
   if(saved){
@@ -402,8 +413,10 @@ window.onload=()=>{
               cell.contentEditable="true"; 
               cell.innerText = cellVal; 
               // 🚨 修正: 読み込み時
-              cell.style.textAlign = "center"; 
               cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+              if (cellVal.trim() !== '') {
+                  enforceCenter(cell); // ロードしたデータも中央揃えを強制
+              }
           });
       });
 
@@ -412,7 +425,6 @@ window.onload=()=>{
         headerData.forEach(() => { 
             const cell = row.insertCell(); 
             cell.contentEditable="true"; 
-            cell.style.textAlign = "center"; // 🚨 修正
             cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
         });
       }
@@ -424,7 +436,7 @@ window.onload=()=>{
 // 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
-  // CSVエクスポートロジックは変更なし
+  // CSVエクスポートロジックは変更なし（innerTextでテキストのみを取得）
   
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
   const h3s=document.querySelectorAll('h3');
@@ -455,7 +467,7 @@ function exportCSV(){
 }
 
 // ------------------------------------
-// 4. CSVインポート関数 (中央揃えの処理を追加)
+// 4. CSVインポート関数 
 // ------------------------------------
 function importCSV(event){
   const file=event.target.files[0];
@@ -520,8 +532,561 @@ function importCSV(event){
             cell.contentEditable="true"; 
             cell.innerText=rowCells[i] ? rowCells[i] : ''; 
             // 🚨 修正: インポート時
-            cell.style.textAlign = "center";
             cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+            if (cell.innerText.trim() !== '') {
+                enforceCenter(cell); // ロードしたデータも中央揃えを強制
+            }
+        }
+        lineIndex++;
+      }
+      
+      lineIndex++; 
+    }
+    alert("CSVファイルをインポートしました！");
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>就職活動 メモ</title>
+<style>
+/* 🎨 デザインCSS (中央揃えのCSS指定は念のため全て維持) */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --light-bg: #f8f9fa;
+  --border-color: #dee2e6;
+  --header-bg: #e9ecef;
+}
+body { 
+  font-family: 'Helvetica Neue', Arial, sans-serif; 
+  padding: 30px; 
+  background-color: var(--light-bg);
+  color: #333;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+h1 { 
+  font-size: 28px; 
+  border-bottom: 3px solid var(--primary-color);
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+  color: #212529;
+  cursor: text;
+}
+h3 { 
+  font-size: 20px; 
+  margin-top: 30px; 
+  margin-bottom: 15px; 
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: text;
+}
+table { 
+  border-collapse: collapse; 
+  margin-bottom: 25px; 
+  width: 100%; 
+  table-layout: fixed; 
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  background-color: white;
+}
+th, td { 
+  border: 1px solid var(--border-color); 
+  padding: 12px 15px; 
+  white-space: normal;
+  word-wrap: break-word;
+  vertical-align: top;
+}
+th {
+  background-color: var(--header-bg); 
+  font-weight: bold;
+  color: #495057;
+  position: sticky; 
+  top: 0;
+  z-index: 10;
+  text-align: left;
+}
+td[contenteditable="true"]:focus {
+  background-color: #fffacd; 
+  outline: 1px solid var(--primary-color);
+}
+
+/* CSSでの強制も一応維持 */
+td {
+  text-align: center !important; 
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+.table-controls {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+}
+.global-controls {
+    margin-top: 20px;
+    padding: 10px 0;
+}
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  font-weight: 500;
+}
+button:hover {
+  background-color: #0056b3;
+}
+button:active {
+  transform: scale(0.98);
+}
+.secondary-btn {
+  background-color: var(--secondary-color);
+}
+.secondary-btn:hover {
+  background-color: #5a6268;
+}
+</style>
+</head>
+<body>
+
+<h1>就職活動 メモ</h1>
+<br>
+
+<h3 contenteditable="true">動いている企業</h3>
+<table id="table1">
+  <thead>
+    <tr>
+      <th contenteditable="true">企業名</th>
+      <th contenteditable="true">業種</th>
+      <th contenteditable="true">選考状況</th>
+      <th contenteditable="true">次回予定</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="button-group table-controls">
+  <button onclick="addRow('table1')">行追加</button>
+  <button onclick="removeRow('table1')" class="secondary-btn">行削除</button>
+  <button onclick="addCol('table1')">列追加</button>
+  <button onclick="removeCol('table1')" class="secondary-btn">列削除</button>
+</div>
+
+<h3 contenteditable="true">情報収集中の企業</h3>
+<table id="table2">
+  <thead>
+    <tr>
+      <th contenteditable="true">企業名</th>
+      <th contenteditable="true">興味度</th>
+      <th contenteditable="true">備考</th>
+      <th contenteditable="true">情報源</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+        <td contenteditable="true" onblur="enforceCenter(this)"></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="button-group table-controls">
+  <button onclick="addRow('table2')">行追加</button>
+  <button onclick="removeRow('table2')" class="secondary-btn">行削除</button>
+  <button onclick="addCol('table2')">列追加</button>
+  <button onclick="removeCol('table2')" class="secondary-btn">列削除</button>
+</div>
+
+<div class="button-group global-controls">
+  <button onclick="saveTables()">データ保存 (ブラウザ)</button>
+  <button onclick="exportCSV()" class="secondary-btn">CSVとしてエクスポート</button>
+  <button onclick="document.getElementById('csvFileInput').click()" class="secondary-btn">CSVインポート</button>
+  <button onclick="resetTables()">全リセット</button>
+  <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+</div>
+
+<script>
+// 🚨 Local Storage 強制リセットコード (問題解決まで一時的に使用)
+if (localStorage.getItem('tableData')) {
+    localStorage.removeItem('tableData');
+    console.log("Local Storage data has been cleared."); 
+}
+
+// 🚩 決定打となるJavaScript関数 (HTMLタグで強制)
+function enforceCenter(cell) {
+    const text = cell.innerText.trim();
+    
+    // テキストが存在し、かつ既に<center>で囲まれていない場合のみ処理
+    if (text !== '' && !cell.innerHTML.toLowerCase().includes('<center>')) {
+        // セルの内容を<center>タグで囲んで強制的に中央揃えにする
+        cell.innerHTML = '<center>' + text + '</center>';
+    } else if (text === '') {
+        // 内容が空になった場合は、<center>タグを削除して空の状態に戻す
+        cell.innerHTML = '';
+    }
+    // contenteditableのセルを編集すると、ブラウザが勝手にdivやbrを挿入する場合があるので、
+    // HTMLの検証が面倒になるため、今回はHTMLタグを使いテキストのみを操作する
+}
+
+
+// --- 補助関数 ---
+function getTableHeadCells(tableId) {
+    const table = document.getElementById(tableId);
+    if (table && table.tHead && table.tHead.rows.length > 0) {
+        return table.tHead.rows[0].cells;
+    }
+    return [];
+}
+function getTableBody(tableId) {
+    return document.getElementById(tableId).tBodies[0];
+}
+
+// CSVデコードヘルパー関数
+const decodeCSVLine = (line) => {
+  const cells = line.match(/(?:"[^"]*?"|[^,]+)/g) || [];
+  return cells.map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());
+};
+
+// ------------------------------------
+// 1. テーブル操作関数 
+// ------------------------------------
+function addRow(tableId){
+  const table = document.getElementById(tableId);
+  let tbody = table.tBodies[0];
+  if (!tbody) { tbody = table.createTBody(); }
+
+  const headCells = getTableHeadCells(tableId);
+  const cols = headCells.length;
+  
+  if (cols === 0) { alert("先に列（ヘッダー）を追加してください。"); return; }
+
+  const row = tbody.insertRow();
+  for(let i=0; i<cols; i++){ 
+    const cell=row.insertCell(); 
+    cell.contentEditable="true"; 
+    // 🚨 修正: 行追加時
+    cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+  }
+}
+
+function removeRow(tableId){
+  const tbody = getTableBody(tableId);
+  if (!tbody) return; 
+
+  if(tbody.rows.length > 1) {
+    tbody.deleteRow(-1);
+  } else if (tbody.rows.length === 1) {
+    Array.from(tbody.rows[0].cells).forEach(cell => cell.innerText = '');
+  }
+}
+
+function addCol(tableId){
+  const table = document.getElementById(tableId);
+  let tbody = table.tBodies[0];
+  if (!tbody) { tbody = table.createTBody(); }
+  
+  let tHeadRow;
+  if (table.tHead && table.tHead.rows.length > 0) {
+      tHeadRow = table.tHead.rows[0];
+  } else {
+      if (!table.tHead) table.createTHead();
+      tHeadRow = table.tHead.insertRow();
+  }
+  
+  const th = document.createElement('th'); 
+  th.innerText = `新規列`;
+  th.contentEditable="true"; 
+  tHeadRow.appendChild(th);
+  
+  for(let row of tbody.rows){ 
+    const cell=row.insertCell(); 
+    cell.contentEditable="true"; 
+    // 🚨 修正: 列追加時
+    cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+  }
+  
+  if (tbody.rows.length === 0) {
+      const row = tbody.insertCell();
+      const cell = row.insertCell(); 
+      cell.contentEditable="true";
+      cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+  }
+}
+
+// ------------------------------------
+// 2. データ操作関数 
+// ------------------------------------
+function resetData(){
+    // 見出しを初期化
+    document.querySelector('h1').innerText = "就職活動 メモ";
+    document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
+    document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
+
+    const defaultHeaders = {
+        'table1': ['企業名', '業種', '選考状況', '次回予定'],
+        'table2': ['企業名', '興味度', '備考', '情報源']
+    };
+
+    ['table1','table2'].forEach(id => {
+        const table = document.getElementById(id);
+        
+        // 1. TH（ヘッダーセル）を初期化
+        let tHeadRow;
+        if (table.tHead && table.tHead.rows.length > 0) {
+            tHeadRow = table.tHead.rows[0];
+        } else {
+            if (!table.tHead) table.createTHead();
+            tHeadRow = table.tHead.insertRow();
+        }
+        tHeadRow.innerHTML = '';
+        defaultHeaders[id].forEach(headerText => {
+            const th = document.createElement('th');
+            th.contentEditable = "true";
+            th.innerText = headerText;
+            tHeadRow.appendChild(th);
+        });
+        
+        // 2. TBody（データ行）を初期化
+        let tbody = table.tBodies[0];
+        if (!tbody) { tbody = table.createTBody(); }
+        tbody.innerHTML = '';
+        const row = tbody.insertRow();
+        const headerCount = defaultHeaders[id].length;
+        for (let i = 0; i < headerCount; i++) {
+            const cell = row.insertCell(); 
+            cell.contentEditable = "true"; 
+            // 🚨 修正: リセット時
+            cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+        }
+    });
+    localStorage.removeItem('tableData'); // Local Storageもクリア
+}
+
+function saveTables(){
+    const data={};
+    // H1, H3のテキストも保存する (セルの内容自体はinnerTextで保存)
+    data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h3')).map(h=>h.innerText)];
+    
+    ['table1','table2'].forEach((id,index)=>{
+        const table=document.getElementById(id);
+        const rows=[];
+        
+        const headerCells = Array.from(getTableHeadCells(id)).map(cell => cell.innerText);
+        rows.push(headerCells);
+
+        const tbody = table.tBodies[0];
+        if (tbody) {
+            for(let row of tbody.rows){
+            const cells=[];
+            // セルから純粋なテキストを取り出すためにinnerTextを使う
+            for(let cell of row.cells) cells.push(cell.innerText); 
+            rows.push(cells);
+            }
+        }
+        data['table'+(index+1)]=rows;
+    });
+    localStorage.setItem('tableData',JSON.stringify(data));
+    alert("データをブラウザに保存しました！");
+}
+
+window.onload=()=>{
+  const saved=localStorage.getItem('tableData');
+  
+  // 🚨 既存の初期設定HTML要素にJSイベントリスナーを付与
+  document.querySelectorAll('td[contenteditable="true"]').forEach(cell => {
+    cell.onblur = function() { enforceCenter(this); };
+    // 初期表示時に内容が空でなければ、強制的に中央揃えにする
+    if (cell.innerText.trim() !== '') {
+        enforceCenter(cell);
+    }
+  });
+
+  if(saved){
+    const data=JSON.parse(saved);
+    const texts=[document.querySelector('h1'), ...document.querySelectorAll('h3')];
+    data.texts.forEach((txt,i)=>{ 
+        if(texts[i]) texts[i].innerText=txt; 
+    });
+    
+    ['table1','table2'].forEach((id,index)=>{
+      const table=document.getElementById(id);
+      
+      if (!table.tHead || table.tHead.rows.length === 0) {
+        if (!table.tHead) table.createTHead();
+        table.tHead.insertRow();
+      }
+      const tHeadRow=table.tHead.rows[0];
+      
+      let tbody = table.tBodies[0];
+      if (!tbody) { tbody = table.createTBody(); }
+      
+      const allRows=data['table'+(index+1)]; 
+
+      const headerData = allRows[0] || [];
+      tHeadRow.innerHTML = '';
+      headerData.forEach(val => {
+        const th = document.createElement('th');
+        th.contentEditable = "true";
+        th.innerText = val;
+        tHeadRow.appendChild(th);
+      });
+
+      const dataRows = allRows.slice(1);
+      tbody.innerHTML = '';
+      
+      dataRows.forEach(rowData => {
+          const row = tbody.insertRow();
+          rowData.forEach(cellVal => { 
+              const cell = row.insertCell(); 
+              cell.contentEditable="true"; 
+              cell.innerText = cellVal; 
+              // 🚨 修正: 読み込み時
+              cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+              if (cellVal.trim() !== '') {
+                  enforceCenter(cell); // ロードしたデータも中央揃えを強制
+              }
+          });
+      });
+
+      if (tbody.rows.length === 0 && headerData.length > 0) {
+        const row = tbody.insertRow();
+        headerData.forEach(() => { 
+            const cell = row.insertCell(); 
+            cell.contentEditable="true"; 
+            cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+        });
+      }
+    });
+  }
+}
+
+// ------------------------------------
+// 3. CSV操作関数 
+// ------------------------------------
+function exportCSV(){
+  // CSVエクスポートロジックは変更なし（innerTextでテキストのみを取得）
+  
+  let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
+  const h3s=document.querySelectorAll('h3');
+  
+  h3s.forEach((h,index)=>{
+    csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
+    const table=document.getElementById('table'+(index+1));
+    
+    if (index === 1) {
+        csv += '\n'; 
+    }
+
+    const headerCells = Array.from(getTableHeadCells('table'+(index+1))).map(cell => cell.innerText.replace(/"/g,'""'));
+    csv+='"' + headerCells.join('","') + '"\n';
+
+    const tbody = table.tBodies[0];
+    if (tbody) {
+        for(let row of tbody.rows){
+          let cells=[];
+          for(let cell of row.cells) cells.push(cell.innerText.replace(/"/g,'""'));
+          csv+='"' + cells.join('","') + '"\n';
+        }
+    }
+    csv+='\n';
+  });
+  const blob=new Blob(['\ufeff', csv],{type:'text/csv;charset=utf-8'}); 
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='job_search_memo.csv'; a.click();
+}
+
+// ------------------------------------
+// 4. CSVインポート関数 
+// ------------------------------------
+function importCSV(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  
+  reader.onload=e=>{
+    const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
+    if(lines.length<1) return;
+    
+    let tableIndex=-1, lineIndex=1; 
+    const h3s=document.querySelectorAll('h3');
+    const tables=[document.getElementById('table1'), document.getElementById('table2')];
+    
+    while(lineIndex < lines.length && tableIndex < 2){
+      tableIndex++;
+      const table = tables[tableIndex];
+
+      if(h3s[tableIndex] && lines[lineIndex]) {
+          const decodedLine = decodeCSVLine(lines[lineIndex]);
+          
+          if (decodedLine.length === 1 && decodedLine[0] !== "") {
+              h3s[tableIndex].innerText = decodedLine[0];
+              lineIndex++; 
+          }
+      }
+      
+      if (!table.tHead) table.createTHead();
+      if (table.tHead.rows.length === 0) table.tHead.insertRow();
+      const tHeadRow = table.tHead.rows[0];
+      
+      let tbody = table.tBodies[0];
+      if (!tbody) { tbody = table.createTBody(); }
+      
+      tbody.innerHTML = '';
+      tHeadRow.innerHTML = '';
+      
+      if(lineIndex < lines.length && lines[lineIndex]) {
+          const headerCells = decodeCSVLine(lines[lineIndex]);
+          headerCells.forEach(h => { 
+              const th = document.createElement('th');
+              th.contentEditable = "true";
+              th.innerText = h;
+              tHeadRow.appendChild(th);
+          });
+          lineIndex++; 
+      }
+      
+      const expectedCols = tHeadRow.cells.length;
+
+      while(lineIndex < lines.length && lines[lineIndex]){
+        const rowCells = decodeCSVLine(lines[lineIndex]);
+        
+        if (expectedCols === 1 && rowCells.length > 1) break;
+        if (rowCells.length === 1 && rowCells[0] !== "") {
+            break;
+        }
+
+        const row = tbody.insertRow();
+        for (let i = 0; i < expectedCols; i++) {
+            const cell = row.insertCell(); 
+            cell.contentEditable="true"; 
+            cell.innerText=rowCells[i] ? rowCells[i] : ''; 
+            // 🚨 修正: インポート時
+            cell.onblur = function() { enforceCenter(this); }; // JS関数を適用
+            if (cell.innerText.trim() !== '') {
+                enforceCenter(cell); // ロードしたデータも中央揃えを強制
+            }
         }
         lineIndex++;
       }
