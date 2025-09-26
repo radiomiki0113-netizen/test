@@ -64,6 +64,10 @@ td[contenteditable="true"]:focus {
   background-color: #fffacd; 
   outline: 1px solid var(--primary-color);
 }
+/* 🔥 修正点: tdにもテキスト配置スタイルを追加 */
+td {
+  text-align: center;
+}
 
 .button-group {
   display: flex;
@@ -420,7 +424,7 @@ function exportCSV(){
     csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
     const table=document.getElementById('table'+(index+1));
     
-    // 🔥 修正点：2つ目のテーブルの前に空白行を追加
+    // 2つ目のテーブルの前に空白行を追加
     if (index === 1) {
         csv += '\n'; 
     }
