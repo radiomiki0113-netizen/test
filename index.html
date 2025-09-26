@@ -1,192 +1,218 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>エクセルみたいな表（二段構成＋h3見出し）</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { font-size: 24px; }
-    h3 { font-size: 18px; margin-top: 20px; }
-    table { border-collapse: collapse; margin-bottom: 20px; width: 100%; }
-    th, td {
-      border: 1px solid #000;
-      padding: 8px;
-      min-width: 100px;
-      text-align: left;
-    }
-    button { margin: 5px; }
-  </style>
+<meta charset="UTF-8">
+<title>就職活動メモ 完全版</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  h1 { font-size: 24px; }
+  h3 { font-size: 18px; margin-top: 20px; }
+  table { border-collapse: collapse; margin-bottom: 20px; width: 100%; table-layout: fixed; }
+  th, td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  th { cursor: pointer; }
+  button { margin: 5px; }
+</style>
 </head>
 <body>
-  <h1>就職活動 メモ</h1>
-  <h3>動いている企業</h3>
-  <table id="table1">
-    <tbody>
-      <tr><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-    </tbody>
-  </table>
+<h1>就職活動 メモ</h1>
 
-  <h3>2段目の表用サブタイトル</h3>
-  <table id="table2">
-    <tbody>
-      <tr><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-    </tbody>
-  </table>
+<h3>動いている企業</h3>
+<table id="table1">
+  <thead>
+    <tr>
+      <th>企業名</th>
+      <th>業種</th>
+      <th>選考状況</th>
+      <th>次回予定</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+  </tbody>
+</table>
 
-  <!-- 1段目ボタン -->
-  <button onclick="addRow('table1')">1段目に行追加</button>
-  <button onclick="removeRow('table1')">1段目の行削除</button>
-  <button onclick="addCol('table1')">1段目に列追加</button>
-  <button onclick="removeCol('table1')">1段目の列削除</button>
-  <br>
+<h3>2段目の表用サブタイトル</h3>
+<table id="table2">
+  <thead>
+    <tr>
+      <th>項目1</th>
+      <th>項目2</th>
+      <th>項目3</th>
+      <th>項目4</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+  </tbody>
+</table>
 
-  <!-- 2段目ボタン -->
-  <button onclick="addRow('table2')">2段目に行追加</button>
-  <button onclick="removeRow('table2')">2段目の行削除</button>
-  <button onclick="addCol('table2')">2段目に列追加</button>
-  <button onclick="removeCol('table2')">2段目の列削除</button>
-  <br>
-
-  <!-- 共通操作 -->
+<!-- 操作ボタン -->
+<div>
+  <h4>1段目操作</h4>
+  <button onclick="addRow('table1')">行追加</button>
+  <button onclick="removeRow('table1')">行削除</button>
+  <button onclick="addCol('table1')">列追加</button>
+  <button onclick="removeCol('table1')">列削除</button>
+</div>
+<div>
+  <h4>2段目操作</h4>
+  <button onclick="addRow('table2')">行追加</button>
+  <button onclick="removeRow('table2')">行削除</button>
+  <button onclick="addCol('table2')">列追加</button>
+  <button onclick="removeCol('table2')">列削除</button>
+</div>
+<div>
+  <h4>共通操作</h4>
   <button onclick="resetTables()">リセット</button>
   <button onclick="saveTables()">保存</button>
   <button onclick="exportCSV()">CSVとして保存</button>
   <input type="file" id="csvFileInput" accept=".csv" onchange="importCSV(event)">
-  <br><br>
+</div>
 
-  <script>
-    // 行を追加
-    function addRow(tableId) {
-      const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
-      const cols = table.rows[0] ? table.rows[0].cells.length : 1;
-      const newRow = table.insertRow();
-      for (let i = 0; i < cols; i++) {
-        const newCell = newRow.insertCell();
-        newCell.contentEditable = "true";
-      }
+<script>
+/* --- 行・列操作 --- */
+function addRow(tableId) {
+  const tbody = document.getElementById(tableId).tBodies[0];
+  const cols = tbody.rows[0] ? tbody.rows[0].cells.length : 1;
+  const row = tbody.insertRow();
+  for (let i=0; i<cols; i++){
+    const cell = row.insertCell();
+    cell.contentEditable = "true";
+  }
+}
+function removeRow(tableId) {
+  const tbody = document.getElementById(tableId).tBodies[0];
+  if (tbody.rows.length>1) tbody.deleteRow(-1);
+}
+function addCol(tableId) {
+  const tbody = document.getElementById(tableId).tBodies[0];
+  const ths = document.getElementById(tableId).tHead.rows[0];
+  const th = document.createElement('th'); th.innerText = `列${ths.cells.length+1}`; th.style.width='100px';
+  ths.appendChild(th);
+  for (let row of tbody.rows) {
+    const cell = row.insertCell();
+    cell.contentEditable = "true";
+  }
+  makeWidthEditable(document.getElementById(tableId)); // 新しい列にも長押し幅変更を有効化
+}
+function removeCol(tableId) {
+  const tbody = document.getElementById(tableId).tBodies[0];
+  const ths = document.getElementById(tableId).tHead.rows[0];
+  if (ths.cells.length>1) {
+    ths.deleteCell(-1);
+    for (let row of tbody.rows) row.deleteCell(-1);
+  }
+}
+
+/* --- テーブルリセット --- */
+function resetTables(){
+  ['table1','table2'].forEach(id=>{
+    const table = document.getElementById(id);
+    table.tBodies[0].innerHTML='';
+    const cols = table.tHead.rows[0].cells.length;
+    const row = table.tBodies[0].insertRow();
+    for(let i=0;i<cols;i++){
+      const cell = row.insertCell(); cell.contentEditable="true";
     }
+  });
+  localStorage.removeItem('tableData');
+}
 
-    // 行を削除（最後の行）
-    function removeRow(tableId) {
-      const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
-      if (table.rows.length > 1) {
-        table.deleteRow(-1);
-      }
+/* --- ローカルストレージ保存・復元 --- */
+function saveTables(){
+  const data = {};
+  document.querySelectorAll('table').forEach((table,index)=>{
+    const rows = [];
+    for(let row of table.rows){
+      const cells=[];
+      for(let cell of row.cells) cells.push(cell.innerText);
+      rows.push(cells);
     }
+    data['table'+(index+1)] = rows;
+  });
+  localStorage.setItem('tableData', JSON.stringify(data));
+  alert("保存しました！");
+}
 
-    // 列を追加
-    function addCol(tableId) {
-      const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
-      for (let row of table.rows) {
-        const newCell = row.insertCell();
-        newCell.contentEditable = "true";
-      }
-    }
-
-    // 列を削除（最後の列）
-    function removeCol(tableId) {
-      const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
-      const colCount = table.rows[0].cells.length;
-      if (colCount > 1) {
-        for (let row of table.rows) {
-          row.deleteCell(-1);
-        }
-      }
-    }
-
-    // リセット
-    function resetTables() {
-      document.querySelectorAll("table tbody").forEach(tbody => {
-        tbody.innerHTML = "<tr><td contenteditable='true'></td><td contenteditable='true'></td></tr>";
-      });
-      localStorage.removeItem("tableData");
-    }
-
-    // 保存（ローカルストレージ）
-    function saveTables() {
-      const data = {};
-      document.querySelectorAll("table").forEach((table, index) => {
-        const rows = [];
-        for (let row of table.rows) {
-          const cells = [];
-          for (let cell of row.cells) {
-            cells.push(cell.innerText);
-          }
-          rows.push(cells);
-        }
-        data["table" + (index+1)] = rows;
-      });
-      localStorage.setItem("tableData", JSON.stringify(data));
-      alert("保存しました！");
-    }
-
-    // ページ読み込み時に復元
-    window.onload = () => {
-      const savedData = localStorage.getItem("tableData");
-      if (savedData) {
-        const data = JSON.parse(savedData);
-        for (let key in data) {
-          const table = document.getElementById(key).getElementsByTagName("tbody")[0];
-          table.innerHTML = "";
-          data[key].forEach(rowData => {
-            const row = table.insertRow();
-            rowData.forEach(cellData => {
-              const cell = row.insertCell();
-              cell.contentEditable = "true";
-              cell.innerText = cellData;
-            });
-          });
-        }
-      }
-    };
-
-    // CSVエクスポート
-    function exportCSV() {
-      let csv = "";
-      document.querySelectorAll("table").forEach((table, index) => {
-        csv += "Table" + (index+1) + "\n";
-        for (let row of table.rows) {
-          let cells = [];
-          for (let cell of row.cells) {
-            cells.push(cell.innerText.replace(/"/g, '""'));
-          }
-          csv += '"' + cells.join('","') + '"\n';
-        }
-        csv += "\n";
-      });
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "tables.csv";
-      a.click();
-    }
-
-    // CSVインポート
-    function importCSV(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        const sections = text.split(/Table\d+\n/).filter(s => s.trim() !== "");
-        sections.forEach((section, index) => {
-          const rows = section.trim().split("\n").filter(r => r.trim() !== "");
-          const table = document.getElementById("table" + (index+1)).getElementsByTagName("tbody")[0];
-          table.innerHTML = "";
-          rows.forEach(rowText => {
-            const row = table.insertRow();
-            const cells = rowText.split(",").map(c => c.replace(/^"|"$/g, "").replace(/""/g, '"'));
-            cells.forEach(cellData => {
-              const cell = row.insertCell();
-              cell.contentEditable = "true";
-              cell.innerText = cellData;
-            });
-          });
+window.onload = ()=>{
+  // データ復元
+  const saved = localStorage.getItem('tableData');
+  if(saved){
+    const data = JSON.parse(saved);
+    for(let key in data){
+      const table = document.getElementById(key);
+      const tbody = table.tBodies[0]; tbody.innerHTML='';
+      data[key].forEach(rowData=>{
+        const row = tbody.insertRow();
+        rowData.forEach(cellData=>{
+          const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=cellData;
         });
-      };
-      reader.readAsText(file);
+      });
     }
-  </script>
+  }
+  makeWidthEditable(document.getElementById('table1'));
+  makeWidthEditable(document.getElementById('table2'));
+};
+
+/* --- CSV出力・入力 --- */
+function exportCSV(){
+  let csv='';
+  document.querySelectorAll('table').forEach((table,index)=>{
+    csv += 'Table'+(index+1)+'\n';
+    for(let row of table.rows){
+      let cells = [];
+      for(let cell of row.cells) cells.push(cell.innerText.replace(/"/g,'""'));
+      csv += '"'+cells.join('","')+'"\n';
+    }
+    csv+='\n';
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tables.csv'; a.click();
+}
+
+function importCSV(event){
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const text=e.target.result;
+    const sections = text.split(/Table\d+\n/).filter(s=>s.trim()!=='');
+    sections.forEach((section,index)=>{
+      const rows = section.trim().split("\n").filter(r=>r.trim()!=='');
+      const table = document.getElementById('table'+(index+1));
+      const tbody = table.tBodies[0]; tbody.innerHTML='';
+      rows.forEach(rowText=>{
+        const row = tbody.insertRow();
+        const cells = rowText.split(',').map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+        cells.forEach(cellData=>{
+          const cell = row.insertCell(); cell.contentEditable="true"; cell.innerText=cellData;
+        });
+      });
+    });
+  };
+  reader.readAsText(file);
+}
+
+/* --- iPhone対応：長押しで列幅変更 --- */
+function makeWidthEditable(table){
+  const cols = table.querySelectorAll('th');
+  cols.forEach(col=>{
+    col.addEventListener('touchstart', function(e){
+      if(this.timeout) clearTimeout(this.timeout);
+      this.timeout = setTimeout(()=>{
+        const currentWidth = col.offsetWidth;
+        const newWidth = prompt('列幅をpxで入力してください', currentWidth);
+        if(newWidth && !isNaN(newWidth)) col.style.width = newWidth+'px';
+      }, 600);
+    });
+    col.addEventListener('touchend', function(){ if(this.timeout) clearTimeout(this.timeout); });
+  });
+}
+</script>
 </body>
 </html>
