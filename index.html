@@ -16,7 +16,6 @@ button { margin: 3px; }
 <body>
 
 <h1 contenteditable="true">就職活動 メモ</h1>
-
 <br>
 
 <h3 contenteditable="true">動いている企業</h3>
@@ -194,23 +193,22 @@ function importCSV(event){
   const reader=new FileReader();
   reader.onload=e=>{
     const lines=e.target.result.split('\n');
-    let stage=0; // 0=h1,1=h3+table1,2=h3+table2
+    let mode='h1'; // 'h1','h3','table'
     let currentTable=null;
+    let tableIndex=0;
     lines.forEach(line=>{
       line=line.trim();
       if(line==='') return;
       line=line.replace(/^"|"$/g,'').replace(/""/g,'"');
-      if(stage===0){
+      if(mode==='h1'){
         document.querySelector('h1').innerText=line;
-        stage=1;
-      } else if(stage===1){
-        document.querySelectorAll('h3')[0].innerText=line;
-        currentTable=document.getElementById('table1'); currentTable.tBodies[0].innerHTML=''; currentTable.tHead.innerHTML='';
-      } else if(stage===2){
-        document.querySelectorAll('h3')[1].innerText=line;
-        currentTable=document.getElementById('table2'); currentTable.tBodies[0].innerHTML=''; currentTable.tHead.innerHTML='';
-      } else {
-        // 行データ
+        mode='h3';
+      } else if(mode==='h3'){
+        document.querySelectorAll('h3')[tableIndex].innerText=line;
+        currentTable=document.getElementById('table'+(tableIndex+1));
+        currentTable.tHead.innerHTML=''; currentTable.tBodies[0].innerHTML='';
+        mode='table';
+      } else if(mode==='table'){
         const cells=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
         if(currentTable.tHead.rows.length===0){
           const row=currentTable.tHead.insertRow();
@@ -220,7 +218,11 @@ function importCSV(event){
           cells.forEach(c=>{ const td=row.insertCell(); td.contentEditable="true"; td.innerText=c; });
         }
       }
-      if(stage<2) stage++;
+      // 空行で次のサブタイトル＋表に移動
+      if(line===''){
+        tableIndex++;
+        mode='h3';
+      }
     });
   };
   reader.readAsText(file);
