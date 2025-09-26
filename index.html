@@ -1,180 +1,29 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>就職活動 メモ</title>
-<style>
-/* 🎨 デザイン改善のためのCSS (前回のコードから変更なし) */
-:root {
-  --primary-color: #007bff; /* 青 */
-  --secondary-color: #6c757d; /* 灰色 */
-  --light-bg: #f8f9fa; /* 薄い背景 */
-  --border-color: #dee2e6;
-  --header-bg: #e9ecef;
-}
-body { 
-  font-family: 'Helvetica Neue', Arial, sans-serif; 
-  padding: 30px; 
-  background-color: var(--light-bg);
-  color: #333;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-h1 { 
-  font-size: 28px; 
-  border-bottom: 3px solid var(--primary-color);
-  padding-bottom: 10px;
-  margin-bottom: 30px;
-  color: #212529;
-  cursor: text; /* 編集可能を示す */
-}
-h3 { 
-  font-size: 20px; 
-  margin-top: 30px; 
-  margin-bottom: 15px; 
-  font-weight: 600;
-  color: var(--primary-color);
-  cursor: text; /* 編集可能を示す */
-}
-table { 
-  border-collapse: collapse; 
-  margin-bottom: 25px; 
-  width: 100%; 
-  table-layout: fixed; 
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-  background-color: white;
-}
-th, td { 
-  border: 1px solid var(--border-color); 
-  padding: 12px 15px; 
-  text-align: left; 
-  white-space: normal;
-  word-wrap: break-word;
-  vertical-align: top;
-}
-th {
-  background-color: var(--header-bg); 
-  font-weight: bold;
-  color: #495057;
-  position: sticky; 
-  top: 0;
-  z-index: 10;
-}
-td[contenteditable="true"]:focus {
-  background-color: #fffacd; 
-  outline: 1px solid var(--primary-color);
-}
-
-.button-group {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-}
-.table-controls {
-    border: 1px solid var(--border-color);
-    padding: 10px;
-    border-radius: 5px;
-    background-color: white;
-}
-.global-controls {
-    margin-top: 20px;
-    padding: 10px 0;
-}
-button {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  font-weight: 500;
-}
-button:hover {
-  background-color: #0056b3;
-}
-button:active {
-  transform: scale(0.98);
-}
-.secondary-btn {
-  background-color: var(--secondary-color);
-}
-.secondary-btn:hover {
-  background-color: #5a6268;
-}
-</style>
-</head>
-<body>
-
-<h1 contenteditable="true">就職活動 メモ</h1>
-<br>
-
-<h3 contenteditable="true">動いている企業</h3>
-<table id="table1">
-  <thead>
-    <tr>
-      <th contenteditable="true">企業名</th>
-      <th contenteditable="true">業種</th>
-      <th contenteditable="true">選考状況</th>
-      <th contenteditable="true">次回予定</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-  </tbody>
-</table>
-
-<div class="button-group table-controls">
-  <button onclick="addRow('table1')">行追加</button>
-  <button onclick="removeRow('table1')" class="secondary-btn">行削除</button>
-  <button onclick="addCol('table1')">列追加</button>
-  <button onclick="removeCol('table1')" class="secondary-btn">列削除</button>
-</div>
-
-<h3 contenteditable="true">情報収集中の企業</h3>
-<table id="table2">
-  <thead>
-    <tr>
-      <th contenteditable="true">企業名</th>
-      <th contenteditable="true">興味度</th>
-      <th contenteditable="true">備考</th>
-      <th contenteditable="true">情報源</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-  </tbody>
-</table>
-
-<div class="button-group table-controls">
-  <button onclick="addRow('table2')">行追加</button>
-  <button onclick="removeRow('table2')" class="secondary-btn">行削除</button>
-  <button onclick="addCol('table2')">列追加</button>
-  <button onclick="removeCol('table2')" class="secondary-btn">列削除</button>
-</div>
-
-<div class="button-group global-controls">
-  <button onclick="saveTables()">データ保存 (ブラウザ)</button>
-  <button onclick="exportCSV()" class="secondary-btn">CSVとしてエクスポート</button>
-  <button onclick="document.getElementById('csvFileInput').click()" class="secondary-btn">CSVインポート</button>
-  <button onclick="resetTables()">全リセット</button>
-  <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(event)">
-</div>
-
 <script>
-// --- JS関数の統合と調整 (前回の改良コードから変更なし) ---
+// --- JS関数の修正版 ---
+
+// ヘッダーセルとTbodyを取得する補助関数はそのまま
 function getTableHeadCells(tableId) {
-    return document.getElementById(tableId).tHead.rows[0].cells;
+    // ヘッダー行が存在しない場合の安全策を追加
+    const table = document.getElementById(tableId);
+    if (table && table.tHead && table.tHead.rows.length > 0) {
+        return table.tHead.rows[0].cells;
+    }
+    return [];
 }
 function getTableBody(tableId) {
     return document.getElementById(tableId).tBodies[0];
 }
 
+// 行追加の修正
 function addRow(tableId){
   const tbody = getTableBody(tableId);
-  const cols = getTableHeadCells(tableId).length;
-  if (cols === 0) return; 
+  const headCells = getTableHeadCells(tableId);
+  const cols = headCells.length;
+  
+  if (cols === 0) {
+      alert("先に列（ヘッダー）を追加してください。");
+      return; 
+  }
 
   const row = tbody.insertRow();
   for(let i=0; i<cols; i++){ 
@@ -183,20 +32,23 @@ function addRow(tableId){
   }
 }
 
+// 行削除の修正 (変更なし、問題なしと判断)
 function removeRow(tableId){
   const tbody = getTableBody(tableId);
   if(tbody.rows.length > 1) {
     tbody.deleteRow(-1);
   } else {
+    // 1行しか残っていない場合は内容をクリア
     if (tbody.rows.length === 1) {
         Array.from(tbody.rows[0].cells).forEach(cell => cell.innerText = '');
     }
   }
 }
 
+// 列追加の修正 (変更なし、問題なしと判断)
 function addCol(tableId){
   const tbody = getTableBody(tableId);
-  const ths = getTableHeadCells(tableId);
+  const ths = getTableHeadCells(tableId)[0].parentNode; // tHead.rows[0]
   
   const th = document.createElement('th'); 
   th.innerText = `新規列`;
@@ -209,6 +61,7 @@ function addCol(tableId){
   }
 }
 
+// 列削除の修正 (変更なし、問題なしと判断)
 function removeCol(tableId){
   const tbody = getTableBody(tableId);
   const ths = getTableHeadCells(tableId);
@@ -225,11 +78,10 @@ function removeCol(tableId){
   }
 }
 
+// resetTablesの修正 (デフォルトのヘッダー再設定を確実に行うように調整)
 function resetTables(){
   document.querySelector('h1').innerText = "就職活動 メモ";
-  // デフォルトのヘッダーとデータ行を再設定
   const defaultHeaders = {
-    // 1つ目のテーブルのデフォルトヘッダーをご要望に合わせて更新
     'table1': ['企業名', '業種', '選考状況', '次回予定'],
     'table2': ['企業名', '興味度', '備考', '情報源']
   };
@@ -239,8 +91,13 @@ function resetTables(){
 
   ['table1','table2'].forEach(id => {
     const table = document.getElementById(id);
-    const tbody = table.tBodies[0];
+    // ヘッダー行が存在しない場合に備えて作成
+    if (!table.tHead || table.tHead.rows.length === 0) {
+      if (!table.tHead) table.createTHead();
+      table.tHead.insertRow();
+    }
     const tHeadRow = table.tHead.rows[0];
+    const tbody = table.tBodies[0];
     
     // ヘッダーを初期化
     tHeadRow.innerHTML = '';
@@ -262,6 +119,8 @@ function resetTables(){
   localStorage.removeItem('tableData'); 
   alert("テーブルとローカル保存データをリセットしました！");
 }
+
+// saveTables以降の関数は前回の改良版で正常動作すると考えられますので、そのまま利用します。
 
 function saveTables(){
   const data={};
@@ -293,8 +152,14 @@ window.onload=()=>{
     
     ['table1','table2'].forEach((id,index)=>{
       const table=document.getElementById(id);
-      const tbody=table.tBodies[0];
+      
+      // tHeadが存在しない場合の対処
+      if (!table.tHead || table.tHead.rows.length === 0) {
+        if (!table.tHead) table.createTHead();
+        table.tHead.insertRow();
+      }
       const tHeadRow=table.tHead.rows[0];
+      const tbody=table.tBodies[0];
       const allRows=data['table'+(index+1)]; 
 
       // 1. ヘッダーの復元
@@ -360,6 +225,4 @@ function importCSV(event){
     const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
     if(lines.length<1) return;
     
-    document.querySelector('h1').innerText=lines[0].replace(/^"|"$/g,'').replace(/""/g,'"');
-    
-    let tableIndex=-1
+    document.querySelector('h1').innerText=lines[0].
