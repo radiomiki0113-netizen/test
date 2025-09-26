@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>就職活動メモ 完全版（CSVで全上書き）</title>
+<title>就職活動メモ 完全版（CSV全上書き）</title>
 <style>
 body { font-family: Arial, sans-serif; padding: 20px; }
 h1 { font-size: 24px; }
@@ -14,6 +14,7 @@ button { margin: 3px; }
 </style>
 </head>
 <body>
+
 <h1 contenteditable="true">就職活動 メモ</h1>
 
 <h3 contenteditable="true">動いている企業</h3>
@@ -113,11 +114,15 @@ window.onload=()=>{
     for(let key in data){
       const table=document.getElementById(key);
       const tbody=table.tBodies[0]; tbody.innerHTML='';
-      data[key].forEach(rowData=>{
-        const row=tbody.insertRow();
-        rowData.forEach(cellData=>{
-          const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=cellData;
-        });
+      const thead=table.tHead; thead.innerHTML='';
+      data[key].forEach((rowData,rowIndex)=>{
+        if(rowIndex===0){
+          const row=thead.insertRow();
+          rowData.forEach(cellData=>{ const th=document.createElement('th'); th.contentEditable="true"; th.innerText=cellData; row.appendChild(th); });
+        } else {
+          const row=tbody.insertRow();
+          rowData.forEach(cellData=>{ const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=cellData; });
+        }
       });
     }
   }
@@ -156,26 +161,43 @@ function exportCSV(){
 }
 
 function importCSV(event){ 
-  const file=event.target.files[0]; if(!file) return; 
+  const file=event.target.files[0]; 
+  if(!file) return; 
   const reader=new FileReader(); 
   reader.onload=e=>{
     const text=e.target.result; 
     const lines=text.split('\n').filter(l=>l.trim()!==''); 
-    let currentTable=null; let rowIdx=0; let currentTableObj=null; let currentTableTbody=null;
+    let currentTableObj=null; 
+    let currentTableThead=null; 
+    let currentTableTbody=null;
+
     lines.forEach(line=>{
-      if(line.startsWith('H1_')){ document.querySelector('h1').innerText=line.split(/,(.+)/)[1].replace(/^"|"$/g,'').replace(/""/g,'"'); currentTable=null; }
-      else if(line.startsWith('H3_')){ 
-        const allH3s=document.querySelectorAll('h3'); 
-        const idx=parseInt(line.match(/H3_(\d+)/)[1])-1; 
-        if(allH3s[idx]) allH3s[idx].innerText=line.split(/,(.+)/)[1].replace(/^"|"$/g,'').replace(/""/g,'"'); 
-        currentTable=null; 
+      if(line.startsWith('H1_')){ 
+        document.querySelector('h1').innerText=line.split(/,(.+)/)[1].replace(/^"|"$/g,'').replace(/""/g,'"'); 
       }
-      else if(line.startsWith('Table')){ currentTable=parseInt(line.replace('Table','')); currentTableObj=document.getElementById('table'+currentTable); currentTableTbody=currentTableObj.tBodies[0]; currentTableTbody.innerHTML=''; rowIdx=0; }
-      else if(currentTable){
+      else if(line.startsWith('H3_')){ 
+        const idx=parseInt(line.match(/H3_(\d+)/)[1])-1; 
+        const allH3s=document.querySelectorAll('h3'); 
+        if(allH3s[idx]) allH3s[idx].innerText=line.split(/,(.+)/)[1].replace(/^"|"$/g,'').replace(/""/g,'"'); 
+      }
+      else if(line.startsWith('Table')){ 
+        const tableIndex=parseInt(line.replace('Table',''));
+        currentTableObj=document.getElementById('table'+tableIndex); 
+        currentTableThead=currentTableObj.tHead; 
+        currentTableTbody=currentTableObj.tBodies[0]; 
+        currentTableThead.innerHTML=''; 
+        currentTableTbody.innerHTML=''; 
+        return;
+      }
+      else if(currentTableObj){
         const cells=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
-        const row=currentTableTbody.insertRow();
-        cells.forEach(c=>{ const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=c; });
-        rowIdx++;
+        if(currentTableThead.rows.length===0){ 
+          const row=currentTableThead.insertRow();
+          cells.forEach(c=>{ const th=document.createElement('th'); th.contentEditable="true"; th.innerText=c; row.appendChild(th); });
+        } else {
+          const row=currentTableTbody.insertRow();
+          cells.forEach(c=>{ const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=c; });
+        }
       }
     });
   }; 
@@ -188,15 +210,4 @@ function makeWidthEditable(table){
   cols.forEach(col=>{
     col.addEventListener('touchstart',function(e){
       if(this.timeout) clearTimeout(this.timeout);
-      this.timeout=setTimeout(()=>{
-        const currentWidth=col.offsetWidth;
-        const newWidth=prompt('列幅をpxで入力してください',currentWidth);
-        if(newWidth && !isNaN(newWidth)) col.style.width=newWidth+'px';
-      },600);
-    });
-    col.addEventListener('touchend',function(){ if(this.timeout) clearTimeout(this.timeout); });
-  });
-}
-</script>
-</body>
-</html>
+      this.timeout=setTimeout
