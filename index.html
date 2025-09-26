@@ -64,7 +64,6 @@ td[contenteditable="true"]:focus {
   background-color: #fffacd; 
   outline: 1px solid var(--primary-color);
 }
-/* 🔥 修正点: tdにもテキスト配置スタイルを追加 */
 td {
   text-align: center;
 }
@@ -447,7 +446,7 @@ function exportCSV(){
 }
 
 // ------------------------------------
-// 4. CSVインポート関数 (変更なし)
+// 4. CSVインポート関数 (最終修正版)
 // ------------------------------------
 function importCSV(event){
   const file=event.target.files[0];
@@ -479,7 +478,12 @@ function importCSV(event){
           h3s[tableIndex].innerText = decodeCSVLine(lines[lineIndex])[0] || "テーブルタイトル";
       }
       lineIndex++; // 次の行（ヘッダー行）へ
-
+      
+      // 🔥 修正点: サブタイトルの後に空行がある場合、それを明示的にスキップする
+      if (tableIndex === 1 && lines[lineIndex] === "") {
+        lineIndex++; 
+      }
+      
       // tHead/tBodyの存在チェックと作成
       if (!table.tHead) table.createTHead();
       if (table.tHead.rows.length === 0) table.tHead.insertRow();
