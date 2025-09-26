@@ -163,6 +163,14 @@ button:active {
 </div>
 
 <script>
+// 🚨 Local Storage 強制リセットコード (問題解決まで一時的に使用)
+// ブラウザに保存されている古いデータがCSVインポートを妨害するのを防ぎます
+if (localStorage.getItem('tableData')) {
+    localStorage.removeItem('tableData');
+    // コンソールログはPCのデバッグ用なので、そのまま残しておいてください
+    console.log("Local Storage data has been cleared."); 
+}
+
 // --- 補助関数 ---
 function getTableHeadCells(tableId) {
     const table = document.getElementById(tableId);
@@ -184,7 +192,7 @@ const decodeCSVLine = (line) => {
 };
 
 // ------------------------------------
-// 1. テーブル操作関数 (動作確認済み)
+// 1. テーブル操作関数 
 // ------------------------------------
 function addRow(tableId){
   const table = document.getElementById(tableId);
@@ -264,7 +272,7 @@ function removeCol(tableId){
 }
 
 // ------------------------------------
-// 2. データ操作関数 (動作確認済み)
+// 2. データ操作関数 
 // ------------------------------------
 function resetTables(){
   document.querySelector('h1').innerText = "就職活動 メモ";
@@ -415,7 +423,7 @@ function exportCSV(){
 }
 
 // ------------------------------------
-// 4. CSVインポート修正版 (最終的な修正)
+// 4. CSVインポート関数 (最終修正版)
 // ------------------------------------
 function importCSV(event){
   const file=event.target.files[0];
