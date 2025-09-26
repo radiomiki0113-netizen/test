@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>就職活動 メモ</title>
 <style>
-/* 🎨 デザインCSS (変更なし) */
+/* 🎨 デザインCSS (修正点あり) */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -47,7 +47,7 @@ table {
 th, td { 
   border: 1px solid var(--border-color); 
   padding: 12px 15px; 
-  text-align: left; 
+  /* 🚩 修正1: thとtd共通のtext-align: left; の設定をここで削除しました */
   white-space: normal;
   word-wrap: break-word;
   vertical-align: top;
@@ -59,13 +59,15 @@ th {
   position: sticky; 
   top: 0;
   z-index: 10;
+  /* 🚩 修正2: ヘッダーセル（th）を左揃えに再設定 */
+  text-align: left; 
 }
 td[contenteditable="true"]:focus {
   background-color: #fffacd; 
   outline: 1px solid var(--primary-color);
 }
 td {
-  /* 👈 ここを修正しました！ */
+  /* 🚩 修正3: データセル（td）を中央揃えに明確に設定 */
   text-align: center; 
 }
 
