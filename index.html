@@ -130,7 +130,10 @@ window.onload=()=>{
         if(i<tbody.rows.length){
           dataRows[i].forEach((val,j)=>{
             if(tbody.rows[i].cells[j]) tbody.rows[i].cells[j].innerText=val;
+            else { const cell=tbody.rows[i].insertCell(); cell.contentEditable="true"; cell.innerText=val; }
           });
+          // 余分なセル削除
+          while(tbody.rows[i].cells.length>dataRows[i].length) tbody.rows[i].deleteCell(-1);
         } else {
           const row=tbody.insertRow();
           dataRows[i].forEach(val=>{ const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=val; });
@@ -171,34 +174,32 @@ function importCSV(event){
     if(lines.length<1) return;
     document.querySelector('h1').innerText=lines[0].replace(/^"|"$/g,'').replace(/""/g,'"');
     let tableIndex=-1;
-    let mode='h3';
+    let lineIndex=1;
     const h3s=document.querySelectorAll('h3');
     const tables=[document.getElementById('table1'), document.getElementById('table2')];
-    let lineIndex=1;
     while(lineIndex<lines.length){
       const line=lines[lineIndex].replace(/^"|"$/g,'').replace(/""/g,'"');
-      if(mode==='h3'){
-        tableIndex++;
-        if(h3s[tableIndex]) h3s[tableIndex].innerText=line;
-        mode='table';
-        lineIndex++;
-      } else if(mode==='table'){
-        const table=tables[tableIndex];
-        const cells=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
-        if(table.tBodies[0].rows.length<table.tBodies[0].rows.length+1){
-          const row=table.tBodies[0].insertRow();
-          cells.forEach(c=>{ const td=row.insertCell(); td.contentEditable="true"; td.innerText=c; });
+      tableIndex++;
+      if(h3s[tableIndex]) h3s[tableIndex].innerText=line;
+      lineIndex++;
+      // 表データ読み込み
+      const table=tables[tableIndex];
+      const tbody=table.tBodies[0];
+      let rowIdx=0;
+      while(lineIndex<lines.length && !lines[lineIndex].startsWith('"')){
+        const cells=lines[lineIndex].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+        if(tbody.rows[rowIdx]){
+          // 上書き
+          cells.forEach((c,j)=>{
+            if(tbody.rows[rowIdx].cells[j]) tbody.rows[rowIdx].cells[j].innerText=c;
+            else { const cell=tbody.rows[rowIdx].insertCell(); cell.contentEditable="true"; cell.innerText=c; }
+          });
+          while(tbody.rows[rowIdx].cells.length>cells.length) tbody.rows[rowIdx].deleteCell(-1);
         } else {
-          const row=table.tBodies[0].rows[0];
-          cells.forEach((c,j)=>{ if(row.cells[j]) row.cells[j].innerText=c; });
+          const row=tbody.insertRow();
+          cells.forEach(c=>{ const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=c; });
         }
+        rowIdx++;
         lineIndex++;
-        if(lineIndex>=lines.length || lines[lineIndex].startsWith('"')) mode='h3';
       }
-    }
-  };
-  reader.readAsText(file);
-}
-</script>
-</body>
-</html>
+      // 余分な行削除
