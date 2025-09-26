@@ -184,7 +184,7 @@ const decodeCSVLine = (line) => {
 };
 
 // ------------------------------------
-// 1. テーブル操作関数 (前回確認済み)
+// 1. テーブル操作関数 (動作確認済み)
 // ------------------------------------
 function addRow(tableId){
   const table = document.getElementById(tableId);
@@ -264,7 +264,7 @@ function removeCol(tableId){
 }
 
 // ------------------------------------
-// 2. データ操作関数 (前回確認済み)
+// 2. データ操作関数 (動作確認済み)
 // ------------------------------------
 function resetTables(){
   document.querySelector('h1').innerText = "就職活動 メモ";
@@ -415,7 +415,7 @@ function exportCSV(){
 }
 
 // ------------------------------------
-// 4. CSVインポート修正版 (データ行のズレを修正)
+// 4. CSVインポート修正版 (最終的な修正)
 // ------------------------------------
 function importCSV(event){
   const file=event.target.files[0];
@@ -431,8 +431,7 @@ function importCSV(event){
         document.querySelector('h1').innerText = decodeCSVLine(lines[0])[0] || "就職活動 メモ";
     }
     
-    // 処理開始行を3行目（lines[2]）からにする
-    let tableIndex=-1, lineIndex=2; 
+    let tableIndex=-1, lineIndex=2; // メインタイトル (0) と空行 (1) をスキップして、サブタイトル1 (2) から開始
 
     const h3s=document.querySelectorAll('h3');
     const tables=[document.getElementById('table1'), document.getElementById('table2')];
@@ -441,13 +440,14 @@ function importCSV(event){
       tableIndex++;
       if(!tables[tableIndex]) break;
       
-      // 2. サブタイトルの復元 (lines[lineIndex]、例: lines[2], lines[8])
+      const table = tables[tableIndex];
+
+      // 2. サブタイトルの復元 (例: lines[2], lines[8])
       if(h3s[tableIndex] && lines[lineIndex]) {
           h3s[tableIndex].innerText = decodeCSVLine(lines[lineIndex])[0] || "テーブルタイトル";
       }
-      lineIndex++; // lines[3], lines[9]へ
+      lineIndex++; // 次の行（ヘッダー行）へ
 
-      const table = tables[tableIndex];
       // tHead/tBodyの存在チェックと作成
       if (!table.tHead) table.createTHead();
       if (table.tHead.rows.length === 0) table.tHead.insertRow();
@@ -459,7 +459,7 @@ function importCSV(event){
       tbody.innerHTML = '';
       tHeadRow.innerHTML = '';
       
-      // 3. ヘッダー行の復元 (lines[lineIndex]、例: lines[4], lines[10])
+      // 3. ヘッダー行の復元 (例: lines[3], lines[9])
       if(lineIndex < lines.length && lines[lineIndex]) {
           const headerCells = decodeCSVLine(lines[lineIndex]);
           headerCells.forEach(h => { 
@@ -468,19 +468,20 @@ function importCSV(event){
               th.innerText = h;
               tHeadRow.appendChild(th);
           });
-          lineIndex++; // lines[5], lines[11]へ
+          lineIndex++; // 次の行（データ行）へ
       }
       
       // 4. データ行の復元
-      // lines[lineIndex]がデータ行（例: lines[5]）
+      // lines[lineIndex]がデータ行（例: lines[4]）
+      const expectedCols = tHeadRow.cells.length;
+
       while(lineIndex < lines.length && lines[lineIndex]){
         const rowCells = decodeCSVLine(lines[lineIndex]);
         
-        // データがない、または空行（テーブル間の区切り）と判断
+        // 空行またはデータがない行を検出
         if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === "")) break; 
         
-        // 🚨 修正のポイント: ヘッダーの列数とインポートしたセルの数が合わない場合、エラーを防ぐためスキップ
-        const expectedCols = tHeadRow.cells.length;
+        // 列数が合わない行はスキップ（データではないと判断）
         if (rowCells.length !== expectedCols) {
             console.warn(`Skipping row due to column mismatch (Expected: ${expectedCols}, Found: ${rowCells.length}): ${lines[lineIndex]}`);
             lineIndex++;
@@ -495,7 +496,7 @@ function importCSV(event){
         });
         lineIndex++;
       }
-      lineIndex++; // 次のテーブルのサブタイトルへ
+      lineIndex++; // 次のテーブルのサブタイトルへ行くために、間の空行をスキップ
     }
     alert("CSVファイルをインポートしました！");
   };
