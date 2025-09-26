@@ -65,8 +65,13 @@ td[contenteditable="true"]:focus {
   outline: 1px solid var(--primary-color);
 }
 td {
-  /* 🚩 修正点: !important を追加して、中央揃えを強制適用します */
+  /* すべてのデータセルを中央揃えに強制 */
   text-align: center !important; 
+}
+
+/* 🚨 最終修正点: 最初の列のデータセルに中央揃えを再強制します！ */
+td:first-child {
+  text-align: center !important;
 }
 
 .button-group {
