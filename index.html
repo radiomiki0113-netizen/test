@@ -271,20 +271,33 @@ function removeCol(tableId){
 // 2. データ操作関数 
 // ------------------------------------
 
-// 🔥 新設: 見出しとLocal Storageのみをリセットし、データ行は保持する関数
-function resetHeader(){
+// 🔥 新設: H3タイトルのみを修正し、TH（ヘッダーセル）は触らない関数
+function fixH3Titles(){
+    document.querySelector('h1').innerText = "就職活動 メモ"; // H1も念のため修正
+    document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
+    document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
+    // TH (企業名、業種などのセル) と Local Storage は触らない
+}
+
+// 見出しとLocal Storageのみをリセットし、データ行は保持する関数 (今回の問題の直接原因だったため削除)
+// function resetHeader(){...}
+
+// データ行も含めて全てをリセットする核となる関数
+function resetData(){
+    // 見出しを初期化
     document.querySelector('h1').innerText = "就職活動 メモ";
+    document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
+    document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
+
     const defaultHeaders = {
         'table1': ['企業名', '業種', '選考状況', '次回予定'],
         'table2': ['企業名', '興味度', '備考', '情報源']
     };
 
-    document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
-    document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
-
     ['table1','table2'].forEach(id => {
         const table = document.getElementById(id);
         
+        // 1. TH（ヘッダーセル）を初期化
         let tHeadRow;
         if (table.tHead && table.tHead.rows.length > 0) {
             tHeadRow = table.tHead.rows[0];
@@ -292,8 +305,6 @@ function resetHeader(){
             if (!table.tHead) table.createTHead();
             tHeadRow = table.tHead.insertRow();
         }
-        
-        // ヘッダーをデフォルト値で上書きする
         tHeadRow.innerHTML = '';
         defaultHeaders[id].forEach(headerText => {
             const th = document.createElement('th');
@@ -302,26 +313,9 @@ function resetHeader(){
             tHeadRow.appendChild(th);
         });
         
-        // tbody（データ行）は触らない
-    });
-    localStorage.removeItem('tableData'); 
-}
-
-
-// データ行も含めて全てをリセットする核となる関数
-function resetData(){
-    resetHeader(); // まず見出しをリセット
-    const defaultHeaders = {
-        'table1': ['企業名', '業種', '選考状況', '次回予定'],
-        'table2': ['企業名', '興味度', '備考', '情報源']
-    };
-
-    ['table1','table2'].forEach(id => {
-        const table = document.getElementById(id);
+        // 2. TBody（データ行）を初期化
         let tbody = table.tBodies[0];
         if (!tbody) { tbody = table.createTBody(); }
-        
-        // tbody（データ行）を空にし、1行だけ空の行を追加する
         tbody.innerHTML = '';
         const row = tbody.insertRow();
         const headerCount = defaultHeaders[id].length;
@@ -330,6 +324,7 @@ function resetData(){
             cell.contentEditable = "true"; 
         }
     });
+    localStorage.removeItem('tableData'); // Local Storageもクリア
 }
 
 // ユーザーが「全リセット」ボタンを押したときにのみアラートを出す
@@ -420,8 +415,8 @@ window.onload=()=>{
 // 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
-  // 🔥 修正点: 入力データを消さない resetHeader() を呼び出すように変更！
-  resetHeader(); 
+  // 🔥 最終修正: H3タイトルのみを修正し、TH（ヘッダーセル）の編集内容は維持する
+  fixH3Titles(); 
   
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
   const h3s=document.querySelectorAll('h3');
@@ -429,6 +424,7 @@ function exportCSV(){
     csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
     const table=document.getElementById('table'+(index+1));
     
+    // TH（ヘッダーセル）の内容は、編集されたものがそのまま読み込まれる！
     const headerCells = Array.from(getTableHeadCells('table'+(index+1))).map(cell => cell.innerText.replace(/"/g,'""'));
     csv+='"' + headerCells.join('","') + '"\n';
 
@@ -447,7 +443,7 @@ function exportCSV(){
 }
 
 // ------------------------------------
-// 4. CSVインポート関数 (最終修正版)
+// 4. CSVインポート関数 (変更なし)
 // ------------------------------------
 function importCSV(event){
   const file=event.target.files[0];
