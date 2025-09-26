@@ -65,12 +65,13 @@ td[contenteditable="true"]:focus {
   outline: 1px solid var(--primary-color);
 }
 td {
-  /* すべてのデータセルを中央揃えに強制 */
+  /* 🚩 すべてのデータセルを中央揃えに強制 */
   text-align: center !important; 
 }
 
-/* 🚨 最終修正点: 最初の列のデータセルに中央揃えを再強制します！ */
-td:first-child {
+/* 🚨 最後の修正: 最初の列のセルに対して、ID指定でさらに高い優先度で中央揃えを強制します！ */
+#table1 td:first-child,
+#table2 td:first-child {
   text-align: center !important;
 }
 
