@@ -454,6 +454,7 @@ function importCSV(event){
   const reader=new FileReader();
   
   reader.onload=e=>{
+    // linesはCSVの各行を要素とする配列（空行はフィルター済み）
     const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
     if(lines.length<1) return;
     
@@ -462,26 +463,24 @@ function importCSV(event){
         document.querySelector('h1').innerText = decodeCSVLine(lines[0])[0] || "就職活動 メモ";
     }
     
-    let tableIndex=-1, lineIndex=2; // メインタイトル (0) と空行 (1) をスキップして、サブタイトル1 (2) から開始
+    let tableIndex=-1, lineIndex=1; // メインタイトル (0) の次の行から開始
 
     const h3s=document.querySelectorAll('h3');
     const tables=[document.getElementById('table1'), document.getElementById('table2')];
     
-    while(lineIndex < lines.length){
+    while(lineIndex < lines.length && tableIndex < 2){
       tableIndex++;
-      if(!tables[tableIndex]) break;
-      
       const table = tables[tableIndex];
 
-      // 2. サブタイトルの復元 (例: lines[2], lines[8])
+      // 2. サブタイトルの復元
       if(h3s[tableIndex] && lines[lineIndex]) {
-          h3s[tableIndex].innerText = decodeCSVLine(lines[lineIndex])[0] || "テーブルタイトル";
-      }
-      lineIndex++; // 次の行（ヘッダー行）へ
-      
-      // 🔥 修正点: サブタイトルの後に空行がある場合、それを明示的にスキップする
-      if (tableIndex === 1 && lines[lineIndex] === "") {
-        lineIndex++; 
+          const decodedLine = decodeCSVLine(lines[lineIndex]);
+          
+          // CSV行が1つの要素しかなく、それが空でない場合、H3タイトルとして扱う
+          if (decodedLine.length === 1 && decodedLine[0] !== "") {
+              h3s[tableIndex].innerText = decodedLine[0];
+              lineIndex++; // サブタイトル行を消費する
+          }
       }
       
       // tHead/tBodyの存在チェックと作成
@@ -496,7 +495,7 @@ function importCSV(event){
       tbody.innerHTML = '';
       tHeadRow.innerHTML = '';
       
-      // 3. ヘッダー行の復元 (例: lines[3], lines[9])
+      // 3. ヘッダー行の復元
       if(lineIndex < lines.length && lines[lineIndex]) {
           const headerCells = decodeCSVLine(lines[lineIndex]);
           headerCells.forEach(h => { 
@@ -514,25 +513,33 @@ function importCSV(event){
       while(lineIndex < lines.length && lines[lineIndex]){
         const rowCells = decodeCSVLine(lines[lineIndex]);
         
-        // 空行またはデータがない行を検出
+        // 空行またはデータがない行を検出 (この時点でlinesは空行をフィルタリングしているため、基本的に次のテーブルのサブタイトル行に到達したらbreakするはず)
         if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === "")) break; 
         
-        // 列数が合わない行はスキップ（データではないと判断）
-        if (rowCells.length !== expectedCols) {
-            console.warn(`Skipping row due to column mismatch (Expected: ${expectedCols}, Found: ${rowCells.length}): ${lines[lineIndex]}`);
-            lineIndex++;
-            continue; 
+        // ヘッダーが一つしかないのに、データ行に複数のデータがある場合（=次のサブタイトル行）はbreak
+        if (expectedCols === 1 && rowCells.length > 1) break;
+        
+        // 列数が合わない行はスキップ（データではないと判断）。ただし、列数が0の場合は無視（filter済み）
+        if (expectedCols > 0 && rowCells.length !== expectedCols) {
+             // 最初の列が空文字列で、かつデコード結果が1つだけの場合もブレイク（次のサブタイトルである可能性）
+            if (rowCells.length === 1 && rowCells[0] !== "") {
+                break;
+            }
         }
 
         const row = tbody.insertRow();
-        rowCells.forEach(c=>{ 
-            const cell=row.insertCell(); 
+        // ヘッダーの列数に合わせてデータを挿入
+        for (let i = 0; i < expectedCols; i++) {
+            const cell = row.insertCell(); 
             cell.contentEditable="true"; 
-            cell.innerText=c; 
-        });
+            // rowCellsにデータがない場合は空文字列を挿入
+            cell.innerText=rowCells[i] ? rowCells[i] : ''; 
+        }
         lineIndex++;
       }
-      lineIndex++; // 次のテーブルのサブタイトルへ行くために、間の空行をスキップ
+      
+      // 最後の行の後に改行を想定して次のサブタイトルへ進む
+      lineIndex++; 
     }
     alert("CSVファイルをインポートしました！");
   };
