@@ -195,20 +195,25 @@ function importCSV(event){
     const lines=e.target.result.split('\n');
     let mode='h1'; // 'h1','h3','table'
     let currentTable=null;
-    let tableIndex=0;
-    lines.forEach(line=>{
-      line=line.trim();
+    let tableIndex=-1;
+    lines.forEach(raw=>{
+      let line=raw.trim();
       if(line==='') return;
       line=line.replace(/^"|"$/g,'').replace(/""/g,'"');
+
       if(mode==='h1'){
         document.querySelector('h1').innerText=line;
         mode='h3';
       } else if(mode==='h3'){
-        document.querySelectorAll('h3')[tableIndex].innerText=line;
+        tableIndex++;
+        const h3s=document.querySelectorAll('h3');
+        if(h3s[tableIndex]) h3s[tableIndex].innerText=line;
         currentTable=document.getElementById('table'+(tableIndex+1));
         currentTable.tHead.innerHTML=''; currentTable.tBodies[0].innerHTML='';
         mode='table';
+        return;
       } else if(mode==='table'){
+        if(line.startsWith('Table') || tableIndex>=2) return;
         const cells=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
         if(currentTable.tHead.rows.length===0){
           const row=currentTable.tHead.insertRow();
@@ -217,11 +222,6 @@ function importCSV(event){
           const row=currentTable.tBodies[0].insertRow();
           cells.forEach(c=>{ const td=row.insertCell(); td.contentEditable="true"; td.innerText=c; });
         }
-      }
-      // 空行で次のサブタイトル＋表に移動
-      if(line===''){
-        tableIndex++;
-        mode='h3';
       }
     });
   };
