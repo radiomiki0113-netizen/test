@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>就職活動メモ 完全版</title>
+<title>就職活動メモ</title>
 <style>
 body { font-family: Arial, sans-serif; padding: 20px; }
 h1 { font-size: 24px; }
@@ -113,7 +113,6 @@ function saveTables(){
     data['table'+(index+1)]=rows;
   });
   localStorage.setItem('tableData',JSON.stringify(data));
-  alert("保存しました！");
 }
 
 window.onload=()=>{
@@ -122,22 +121,27 @@ window.onload=()=>{
     const data=JSON.parse(saved);
     const texts=[document.querySelector('h1'), ...document.querySelectorAll('h3')];
     data.texts.forEach((txt,i)=>{ if(texts[i]) texts[i].innerText=txt; });
-    for(let key in data){
-      if(key.startsWith('table')){
-        const table=document.getElementById(key);
-        const tbody=table.tBodies[0]; tbody.innerHTML='';
-        const thead=table.tHead; thead.innerHTML='';
-        data[key].forEach((rowData,rowIndex)=>{
-          if(rowIndex===0){
-            const row=thead.insertRow();
-            rowData.forEach(cellData=>{ const th=document.createElement('th'); th.contentEditable="true"; th.innerText=cellData; row.appendChild(th); });
-          } else {
-            const row=tbody.insertRow();
-            rowData.forEach(cellData=>{ const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=cellData; });
-          }
-        });
+    ['table1','table2'].forEach((id,index)=>{
+      const table=document.getElementById(id);
+      const tbody=table.tBodies[0];
+      const tHead=table.tHead.rows[0];
+      const dataRows=data['table'+(index+1)].slice(1);
+      for(let i=0;i<dataRows.length;i++){
+        if(i<tbody.rows.length){
+          dataRows[i].forEach((val,j)=>{
+            if(tbody.rows[i].cells[j]) tbody.rows[i].cells[j].innerText=val;
+          });
+        } else {
+          const row=tbody.insertRow();
+          dataRows[i].forEach(val=>{ const cell=row.insertCell(); cell.contentEditable="true"; cell.innerText=val; });
+        }
       }
-    }
+      // 不要な行削除
+      while(tbody.rows.length>dataRows.length) tbody.deleteRow(-1);
+      // ヘッダ上書き
+      const headerData=data['table'+(index+1)][0];
+      headerData.forEach((val,j)=>{ if(tHead.cells[j]) tHead.cells[j].innerText=val; });
+    });
   }
 }
 
@@ -168,27 +172,30 @@ function importCSV(event){
     document.querySelector('h1').innerText=lines[0].replace(/^"|"$/g,'').replace(/""/g,'"');
     let tableIndex=-1;
     let mode='h3';
-    lines.slice(1).forEach(line=>{
-      line=line.replace(/^"|"$/g,'').replace(/""/g,'"');
+    const h3s=document.querySelectorAll('h3');
+    const tables=[document.getElementById('table1'), document.getElementById('table2')];
+    let lineIndex=1;
+    while(lineIndex<lines.length){
+      const line=lines[lineIndex].replace(/^"|"$/g,'').replace(/""/g,'"');
       if(mode==='h3'){
         tableIndex++;
-        const h3s=document.querySelectorAll('h3');
         if(h3s[tableIndex]) h3s[tableIndex].innerText=line;
-        const table=document.getElementById('table'+(tableIndex+1));
-        table.tHead.innerHTML=''; table.tBodies[0].innerHTML='';
         mode='table';
+        lineIndex++;
       } else if(mode==='table'){
-        const table=document.getElementById('table'+(tableIndex+1));
+        const table=tables[tableIndex];
         const cells=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
-        if(table.tHead.rows.length===0){
-          const row=table.tHead.insertRow();
-          cells.forEach(c=>{ const th=document.createElement('th'); th.contentEditable="true"; th.innerText=c; row.appendChild(th); });
-        } else {
+        if(table.tBodies[0].rows.length<table.tBodies[0].rows.length+1){
           const row=table.tBodies[0].insertRow();
           cells.forEach(c=>{ const td=row.insertCell(); td.contentEditable="true"; td.innerText=c; });
+        } else {
+          const row=table.tBodies[0].rows[0];
+          cells.forEach((c,j)=>{ if(row.cells[j]) row.cells[j].innerText=c; });
         }
+        lineIndex++;
+        if(lineIndex>=lines.length || lines[lineIndex].startsWith('"')) mode='h3';
       }
-    });
+    }
   };
   reader.readAsText(file);
 }
