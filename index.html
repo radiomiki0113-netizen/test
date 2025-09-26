@@ -242,7 +242,7 @@ function addCol(tableId){
   }
   
   if (tbody.rows.length === 0) {
-      const row = tbody.insertRow();
+      const row = tbody.insertCell();
       const cell = row.insertCell(); 
       cell.contentEditable="true";
   }
@@ -271,16 +271,12 @@ function removeCol(tableId){
 // 2. データ操作関数 
 // ------------------------------------
 
-// 🔥 新設: H3タイトルのみを修正し、TH（ヘッダーセル）は触らない関数
+// H3タイトルのみを修正し、TH（ヘッダーセル）は触らない関数
 function fixH3Titles(){
-    document.querySelector('h1').innerText = "就職活動 メモ"; // H1も念のため修正
+    document.querySelector('h1').innerText = "就職活動 メモ"; 
     document.querySelector('h3:nth-of-type(1)').innerText = "動いている企業";
     document.querySelector('h3:nth-of-type(2)').innerText = "情報収集中の企業";
-    // TH (企業名、業種などのセル) と Local Storage は触らない
 }
-
-// 見出しとLocal Storageのみをリセットし、データ行は保持する関数 (今回の問題の直接原因だったため削除)
-// function resetHeader(){...}
 
 // データ行も含めて全てをリセットする核となる関数
 function resetData(){
@@ -415,7 +411,7 @@ window.onload=()=>{
 // 3. CSV操作関数 
 // ------------------------------------
 function exportCSV(){
-  // 🔥 最終修正: H3タイトルのみを修正し、TH（ヘッダーセル）の編集内容は維持する
+  // H3タイトルのみを修正し、TH（ヘッダーセル）の編集内容は維持する
   fixH3Titles(); 
   
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
@@ -424,7 +420,11 @@ function exportCSV(){
     csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
     const table=document.getElementById('table'+(index+1));
     
-    // TH（ヘッダーセル）の内容は、編集されたものがそのまま読み込まれる！
+    // 🔥 修正点：2つ目のテーブルの前に空白行を追加
+    if (index === 1) {
+        csv += '\n'; 
+    }
+
     const headerCells = Array.from(getTableHeadCells('table'+(index+1))).map(cell => cell.innerText.replace(/"/g,'""'));
     csv+='"' + headerCells.join('","') + '"\n';
 
