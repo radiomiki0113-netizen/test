@@ -50,6 +50,7 @@ th, td {
   white-space: normal;
   word-wrap: break-word;
   vertical-align: top;
+  position: relative; /* inputの位置基準 */
 }
 th {
   background-color: var(--header-bg); 
@@ -61,16 +62,27 @@ th {
   text-align: left;
 }
 
-/* 🚩 決定的な修正点: tdに中央揃えを強制します。contenteditableがなくなったので効くはず！ */
+/* 🚩 決定的な修正点1: tdの直接の子要素（テキストやdiv）を中央揃えに */
 td {
   text-align: center !important; 
-  /* セル内のテキストがoverflowしないように設定 */
   overflow: hidden; 
-  position: relative;
-  /* 編集不能なH3だけはテキスト編集を許可 */
 }
 
-/* 🚩 セルを編集可能にするためのInput要素のスタイル */
+/* 🚩 決定的な修正点2: セル内のコンテナ（div）も中央揃えを強制 */
+.cell-content-wrapper {
+  /* tdのpaddingを相殺し、td全体を占有させる */
+  margin: -12px -15px; 
+  padding: 12px 15px;
+  width: 100%;
+  height: 100%;
+  text-align: center !important; /* divにも中央揃えを強制 */
+  box-sizing: border-box;
+  display: flex; /* flexboxを使って中央揃えを強化 */
+  justify-content: center;
+  align-items: center;
+}
+
+/* 🚩 編集用Input要素のスタイル */
 .cell-input {
   /* td全体に広げ、tdの中央揃えを継承させる */
   width: 100%;
@@ -81,13 +93,14 @@ td {
   box-sizing: border-box;
   /* スタイルをリセットしてセルに溶け込ませる */
   border: none;
-  background-color: transparent;
+  background-color: #fffacd; /* 編集中の色 */
   padding: 12px 15px;
   font-family: inherit;
   font-size: inherit;
   /* input内も中央揃えを強制 */
   text-align: center !important; 
   outline: 1px solid var(--primary-color);
+  z-index: 20; /* 最前面に表示 */
 }
 
 .button-group {
@@ -204,11 +217,43 @@ if (localStorage.getItem('tableData')) {
     console.log("Local Storage data has been cleared."); 
 }
 
-// 🚩 決定打となるJavaScript関数
+// ------------------------------------
+// 🚩 核心となるセル操作関数 
+// ------------------------------------
+
+// セル内に<div>ラッパーを作成する関数
+function wrapContent(cell, text = '') {
+    // 既にラッパーがあれば何もしない
+    if (cell.querySelector('.cell-content-wrapper')) return; 
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cell-content-wrapper';
+    wrapper.innerText = text;
+    cell.appendChild(wrapper);
+}
+
+// セル内のテキストを取得する関数
+function getCellText(cell) {
+    const wrapper = cell.querySelector('.cell-content-wrapper');
+    return wrapper ? wrapper.innerText : cell.innerText;
+}
+
+// セル内のテキストを設定する関数
+function setCellText(cell, text) {
+    const wrapper = cell.querySelector('.cell-content-wrapper');
+    if (wrapper) {
+        wrapper.innerText = text;
+    } else {
+        // ラッパーがない場合（初期ロード時など）は作成してから設定
+        wrapContent(cell, text);
+    }
+}
+
+// セルを編集可能にする関数 (ダブルクリック時)
 function makeEditable(cell) {
     if (cell.querySelector('input')) return; // 既に編集中の場合は何もしない
 
-    const originalText = cell.innerText;
+    const originalText = getCellText(cell);
     
     // input要素を作成
     const input = document.createElement('input');
@@ -221,8 +266,9 @@ function makeEditable(cell) {
         const newText = this.value;
         const parentCell = this.parentElement;
         
-        // input要素を削除し、テキストをtdに戻す
-        parentCell.innerText = newText;
+        // input要素を削除し、テキストをtd内のラッパーに戻す
+        setCellText(parentCell, newText);
+        this.remove(); // input要素を削除
     };
 
     // Enterキーを押した時の処理 (blurを発火させる)
@@ -233,7 +279,7 @@ function makeEditable(cell) {
     };
     
     // セルの内容を空にし、inputを挿入
-    cell.innerText = '';
+    cell.innerHTML = ''; 
     cell.appendChild(input);
     input.focus(); // フォーカスをinputに移動してすぐに入力できるようにする
 }
@@ -257,7 +303,7 @@ const decodeCSVLine = (line) => {
 };
 
 // ------------------------------------
-// 1. テーブル操作関数 (修正済み)
+// 1. テーブル操作関数 
 // ------------------------------------
 function addRow(tableId){
   const table = document.getElementById(tableId);
@@ -272,7 +318,8 @@ function addRow(tableId){
   const row = tbody.insertRow();
   for(let i=0; i<cols; i++){ 
     const cell=row.insertCell(); 
-    cell.ondblclick = function() { makeEditable(this); }; // JS関数を適用
+    cell.ondblclick = function() { makeEditable(this); }; 
+    wrapContent(cell); // 🚨 行追加時にもラッパーを挿入
   }
 }
 
@@ -283,7 +330,8 @@ function removeRow(tableId){
   if(tbody.rows.length > 1) {
     tbody.deleteRow(-1);
   } else if (tbody.rows.length === 1) {
-    Array.from(tbody.rows[0].cells).forEach(cell => cell.innerText = '');
+    // 最後の行のコンテンツを空にする
+    Array.from(tbody.rows[0].cells).forEach(cell => setCellText(cell, ''));
   }
 }
 
@@ -307,13 +355,15 @@ function addCol(tableId){
   
   for(let row of tbody.rows){ 
     const cell=row.insertCell(); 
-    cell.ondblclick = function() { makeEditable(this); }; // JS関数を適用
+    cell.ondblclick = function() { makeEditable(this); }; 
+    wrapContent(cell); // 🚨 列追加時にもラッパーを挿入
   }
   
   if (tbody.rows.length === 0) {
       const row = tbody.insertRow();
       const cell = row.insertCell(); 
-      cell.ondblclick = function() { makeEditable(this); }; // JS関数を適用
+      cell.ondblclick = function() { makeEditable(this); }; 
+      wrapContent(cell); // 🚨 行がない場合にもラッパーを挿入
   }
 }
 
@@ -337,7 +387,7 @@ function removeCol(tableId){
 }
 
 // ------------------------------------
-// 2. データ操作関数 (修正済み)
+// 2. データ操作関数 
 // ------------------------------------
 function resetData(){
     // 見出しを初期化
@@ -377,7 +427,8 @@ function resetData(){
         const headerCount = defaultHeaders[id].length;
         for (let i = 0; i < headerCount; i++) {
             const cell = row.insertCell(); 
-            cell.ondblclick = function() { makeEditable(this); }; // JS関数を適用
+            cell.ondblclick = function() { makeEditable(this); }; 
+            wrapContent(cell); // 🚨 リセット時にもラッパーを挿入
         }
     });
     localStorage.removeItem('tableData'); // Local Storageもクリア
@@ -398,7 +449,8 @@ function saveTables(){
     if (tbody) {
         for(let row of tbody.rows){
           const cells=[];
-          for(let cell of row.cells) cells.push(cell.innerText);
+          // 🚨 修正: getCellTextを使ってラッパー内の純粋なテキストを取得
+          for(let cell of row.cells) cells.push(getCellText(cell)); 
           rows.push(cells);
         }
     }
@@ -411,9 +463,11 @@ function saveTables(){
 window.onload=()=>{
   const saved=localStorage.getItem('tableData');
   
-  // 🚨 既存の初期設定HTML要素にJSイベントリスナーを付与 (ondblclickに変更)
-  document.querySelectorAll('td').forEach(cell => {
+  // 🚨 既存の初期設定HTML要素にイベントリスナーとラッパーを付与
+  document.querySelectorAll('#table1 tbody td, #table2 tbody td').forEach(cell => {
     cell.ondblclick = function() { makeEditable(this); };
+    wrapContent(cell, cell.innerText); // 既存のテキストがあればラッパーに移動
+    cell.innerText = ''; // td直下のテキストをクリア
   });
 
   if(saved){
@@ -453,9 +507,9 @@ window.onload=()=>{
           const row = tbody.insertRow();
           rowData.forEach(cellVal => { 
               const cell = row.insertCell(); 
-              cell.innerText = cellVal; 
               // 🚨 修正: 読み込み時
-              cell.ondblclick = function() { makeEditable(this); }; // JS関数を適用
+              cell.ondblclick = function() { makeEditable(this); }; 
+              setCellText(cell, cellVal); // ラッパー内にテキストを設定
           });
       });
 
@@ -463,7 +517,8 @@ window.onload=()=>{
         const row = tbody.insertRow();
         headerData.forEach(() => { 
             const cell = row.insertCell(); 
-            cell.ondblclick = function() { makeEditable(this); }; // JS関数を適用
+            cell.ondblclick = function() { makeEditable(this); }; 
+            wrapContent(cell); // ラッパーを挿入
         });
       }
     });
@@ -493,7 +548,8 @@ function exportCSV(){
     if (tbody) {
         for(let row of tbody.rows){
           let cells=[];
-          for(let cell of row.cells) cells.push(cell.innerText.replace(/"/g,'""'));
+          // 🚨 修正: getCellTextを使ってラッパー内の純粋なテキストを取得
+          for(let cell of row.cells) cells.push(getCellText(cell).replace(/"/g,'""'));
           csv+='"' + cells.join('","') + '"\n';
         }
     }
@@ -566,9 +622,11 @@ function importCSV(event){
         const row = tbody.insertRow();
         for (let i = 0; i < expectedCols; i++) {
             const cell = row.insertCell(); 
-            cell.innerText=rowCells[i] ? rowCells[i] : ''; 
+            const cellVal = rowCells[i] ? rowCells[i] : ''; 
+            
             // 🚨 修正: インポート時
-            cell.ondblclick = function() { makeEditable(this); }; // JS関数を適用
+            cell.ondblclick = function() { makeEditable(this); }; 
+            setCellText(cell, cellVal); // ラッパー内にテキストを設定
         }
         lineIndex++;
       }
