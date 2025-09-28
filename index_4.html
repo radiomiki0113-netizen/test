@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 最終完全安定版 (枠線、中央揃え、幅の固定を強制適用) */
+/* 🎨 デザインCSS - 縦並びスタイル復元版 */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -47,15 +47,15 @@ table {
   border-collapse: collapse; 
   margin-bottom: 25px; 
   width: 100%; 
-  table-layout: fixed !important; /* ★★★ TABLE LAYOUTを強制適用 ★★★ */
+  /* table-layout: fixed を削除 */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   background-color: white;
-  border: 1px solid var(--border-color); 
+  border: 1px solid var(--border-color); /* テーブル外枠は維持 */
 }
 
-/* ★★★ 枠線とセルの強制適用 ★★★ */
+/* ★★★ 枠線と横並び強制を削除し、縦並び（標準のセル）に戻す ★★★ */
 th, td { 
-  border: 1px solid var(--border-color) !important; /* 枠線を強制適用 */
+  border: none; /* セル間の枠線はなし */
   padding: 12px 15px; 
   white-space: normal;
   word-wrap: break-word;
@@ -71,19 +71,26 @@ th {
   position: sticky; 
   top: 0;
   z-index: 10;
-  height: 60px; 
+  height: auto; 
+  /* THのみ右に境界線を付けることで項目を区切る */
+  border-right: 1px solid var(--border-color); 
+}
+th:last-child {
+  border-right: none; /* 最後のTHは右側の線を消す */
 }
 
-/* 🚩 TD共通スタイル (flexでラッパーを中央配置) */
+/* 🚩 TD共通スタイル - 縦並びの再現 */
 td {
-  padding: 0; 
-  height: 60px; 
-  position: relative; 
-  display: flex; /* flexで内部要素を制御 */
-  justify-content: center; /* 水平方向の中央揃え */
-  align-items: center; /* 垂直方向の中央揃え */
+  padding: 12px 15px;
+  height: auto;
   cursor: pointer; 
   transition: background-color 0.2s, box-shadow 0.1s;
+  display: table-cell; /* 標準のTDに戻す */
+  border-bottom: 1px solid var(--border-color); /* 行と行の間に薄い線だけ残す */
+  border-right: 1px solid var(--border-color); /* 列と列の間に薄い線だけ残す */
+}
+td:last-child {
+  border-right: none; /* 最後のTDは右側の線を消す */
 }
 
 td.selected-cell {
@@ -91,23 +98,11 @@ td.selected-cell {
     border-color: var(--primary-color) !important;
 }
 
-/* 🚩 セル内のコンテナ (内容を中央に配置するラッパー) */
-.cell-content-wrapper {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%; 
-  padding: 12px 15px; 
-  
-  /* 中央揃えを継承し、pre-wrapで改行を保持 */
-  white-space: pre-wrap; 
-  text-align: center; 
-}
-
 /* 🚩 編集用Input要素のスタイル */
 .cell-input {
   width: 100%;
   height: 100%;
-  position: absolute;
+  position: absolute; /* 編集時のみ絶対配置でセルを覆う */
   top: 0;
   left: 0;
   box-sizing: border-box;
@@ -262,49 +257,23 @@ function getTableHeadCells(tableId) {
     return [];
 }
 
+// ★★★ 縦並び復元のため、セルの内容操作を直接テキストに依存させる ★★★
 function wrapContent(cell, text = '') {
-    if (cell.tagName === 'TH') {
-        cell.innerText = text;
-        return;
-    }
-    
-    let wrapper = cell.querySelector('.cell-content-wrapper');
-    
-    if (!wrapper) { 
-        wrapper = document.createElement('div');
-        wrapper.className = 'cell-content-wrapper';
-        
-        const existingText = cell.textContent.trim();
-        cell.textContent = ''; 
-        
-        cell.appendChild(wrapper);
-        wrapper.innerText = text || existingText; 
-    } else {
-        wrapper.innerText = text;
-    }
+    // 以前の flex/wrapper の処理を削除し、直接テキストを操作する
+    cell.innerText = text;
 }
 
 function getCellText(cell) {
-    if (cell.tagName === 'TH') {
-        return cell.innerText;
-    }
-    const wrapper = cell.querySelector('.cell-content-wrapper');
-    return wrapper ? wrapper.innerText : '';
+    // THもTDも直接 innerText を読み込む
+    return cell.innerText;
 }
 
 function setCellText(cell, text) {
-    if (cell.tagName === 'TH') {
-        cell.innerText = text;
-        return;
-    }
-    
-    const wrapper = cell.querySelector('.cell-content-wrapper');
-    if (wrapper) {
-        wrapper.innerText = text;
-    } else {
-        wrapContent(cell, text);
-    }
+    // THもTDも直接 innerText に書き込む
+    cell.innerText = text;
 }
+// ★★★ 縦並び復元のための修正ここまで ★★★
+
 
 function selectCell(cell) {
     if (cell.tagName === 'TH' || cell.querySelector('input.cell-input')) return; 
@@ -328,4 +297,475 @@ function applyColor(colorVariable) {
     }
     
     if (selectedCell.tagName === 'TH') {
-        alert("項目名（ヘッダー）のセル
+        alert("項目名（ヘッダー）のセルには色を付けられません。データセルを選択してください。");
+        return;
+    }
+    
+    const color = colorVariable ? getComputedStyle(document.documentElement).getPropertyValue(colorVariable.replace('var(', '').replace(')', '')) : '';
+    
+    selectedCell.style.backgroundColor = color;
+    
+    selectedCell.classList.remove('selected-cell');
+    selectedCell = null;
+
+    alert(`セルの色を${color === '' ? 'クリア' : color}に設定しました。忘れずに「データ保存」ボタンを押してください。`);
+}
+
+function makeEditable(cell) {
+    if (cell.querySelector('input') || cell.tagName === 'TH') return; 
+    
+    if (selectedCell === cell) {
+        cell.classList.remove('selected-cell');
+        selectedCell = null;
+    }
+
+    const originalText = getCellText(cell);
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'cell-input';
+    input.value = originalText;
+    
+    input.onblur = function() {
+        const newText = this.value;
+        const parentCell = this.parentElement;
+        setCellText(parentCell, newText);
+        this.remove(); 
+    };
+
+    input.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+            this.blur();
+        }
+    };
+    
+    // セル内のテキストを非表示にする代わりに、inputがセル全体を覆うようにCSSで対応
+    cell.appendChild(input);
+    input.focus(); 
+}
+
+function getTableBody(tableId) {
+    return document.getElementById(tableId).tBodies[0];
+}
+
+const decodeCSVLine = (line) => {
+  const cells = line.match(/(?:"[^"]*?"|[^,]+)/g) || [];
+  return cells.map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());
+};
+
+function makeEditableTitle(element) {
+    if (element.querySelector('input')) return;
+    const originalText = element.innerText;
+    element.innerText = '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'text-input';
+    input.value = originalText;
+    input.onblur = function() {
+        element.innerText = this.value;
+        this.remove();
+    };
+    input.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+            this.blur();
+        }
+    };
+    element.appendChild(input);
+    input.focus();
+}
+
+function addRow(tableId){
+  const table = document.getElementById(tableId);
+  let tbody = table.tBodies[0];
+  if (!tbody) { tbody = table.createTBody(); }
+
+  const headCells = getTableHeadCells(tableId);
+  const cols = headCells.length;
+  
+  if (cols === 0) { alert("先に列（ヘッダー）を追加してください。"); return; }
+
+  const row = tbody.insertRow();
+  
+  for(let i=0; i<cols; i++){ 
+    const cell=row.insertCell(); 
+    cell.onclick = function() { selectCell(this); }; 
+    cell.ondblclick = function() { makeEditable(this); }; 
+    wrapContent(cell); 
+  }
+}
+
+function deleteRow(tableId){
+  const tbody = getTableBody(tableId);
+  if (!tbody) return; 
+
+  if(tbody.rows.length > 1) {
+    tbody.deleteRow(-1);
+  } else if (tbody.rows.length === 1) {
+    // 最後の行は削除せず、内容をクリアする
+    Array.from(tbody.rows[0].cells).forEach(cell => {
+        setCellText(cell, '');
+        cell.style.backgroundColor = ''; 
+    });
+  }
+}
+
+function addColumn(tableId){
+  const table = document.getElementById(tableId);
+  let tbody = table.tBodies[0];
+  if (!tbody) { tbody = table.createTBody(); }
+  
+  let tHeadRow;
+  if (table.tHead && table.tHead.rows.length > 0) {
+      tHeadRow = table.tHead.rows[0];
+  } else {
+      if (!table.tHead) table.createTHead();
+      tHeadRow = table.tHead.insertRow();
+  }
+  
+  // THを追加
+  const th = document.createElement('th'); 
+  th.innerText = `新規項目`;
+  th.contentEditable="true"; 
+  tHeadRow.appendChild(th);
+  
+  // データ行にTDを追加
+  for(let row of tbody.rows){ 
+    const cell=row.insertCell(); 
+    cell.onclick = function() { selectCell(this); }; 
+    cell.ondblclick = function() { makeEditable(this); }; 
+    wrapContent(cell);
+  }
+  
+  // データ行が全くない場合は1行追加し、セルを作成
+  if (tbody.rows.length === 0) {
+      const row = tbody.insertRow();
+      // ヘッダー数に合わせてセルを作成
+      for (let i = 0; i < tHeadRow.cells.length; i++) {
+        const cell = row.insertCell(); 
+        cell.onclick = function() { selectCell(this); }; 
+        cell.ondblclick = function() { makeEditable(this); }; 
+        wrapContent(cell);
+      }
+  }
+}
+
+function deleteColumn(tableId){
+  const table = document.getElementById(tableId);
+  const tbody = table.tBodies[0];
+  const ths = getTableHeadCells(tableId);
+  
+  if(ths.length > 1){ 
+    // THを削除
+    ths[ths.length - 1].remove(); 
+    if (tbody) {
+        // TDを削除
+        for(let row of tbody.rows) {
+          if (row.cells.length > 0) {
+            row.deleteCell(-1); 
+          }
+        }
+    }
+  } else {
+      alert("最後の列は削除できません。");
+  }
+}
+
+function resetAll(){
+    // ★★★ ローカルストレージを最初にクリアする (最重要) ★★★
+    localStorage.removeItem('tableData'); 
+
+    document.querySelector('h1').innerText = "就職活動メモ";
+    document.querySelector('.table-container:nth-of-type(1) h2').innerText = "動いている企業";
+    document.querySelector('.table-container:nth-of-type(2) h2').innerText = "情報収集中企業";
+
+    const defaultHeaders = {
+        'active-companies-table': ['企業名', '業種', '選考状況'],
+        'research-companies-table': ['企業名', '興味度']
+    };
+
+    ['active-companies-table','research-companies-table'].forEach(id => {
+        const table = document.getElementById(id);
+        
+        // THEADを初期化
+        let tHeadRow;
+        if (table.tHead && table.tHead.rows.length > 0) {
+            tHeadRow = table.tHead.rows[0];
+        } else {
+            if (!table.tHead) table.createTHead();
+            tHeadRow = table.tHead.insertRow();
+        }
+        tHeadRow.innerHTML = '';
+        defaultHeaders[id].forEach(headerText => {
+            const th = document.createElement('th');
+            th.contentEditable = "true";
+            th.innerText = headerText;
+            tHeadRow.appendChild(th);
+        });
+        
+        // TBODYを初期化
+        let tbody = table.tBodies[0];
+        if (!tbody) { tbody = table.createTBody(); }
+        tbody.innerHTML = '';
+        const row = tbody.insertRow();
+        const headerCount = defaultHeaders[id].length;
+        for (let i = 0; i < headerCount; i++) {
+            const cell = row.insertCell(); 
+            cell.onclick = function() { selectCell(this); }; 
+            cell.ondblclick = function() { makeEditable(this); }; 
+            wrapContent(cell); 
+        }
+    });
+    alert("全データをリセットし、初期状態に戻しました。ブラウザを再起動して開くと確実です。");
+}
+
+function saveData(){
+  const data={};
+  data['texts']=[document.querySelector('h1').innerText, ...Array.from(document.querySelectorAll('h2')).map(h=>h.innerText)];
+  
+  const tableIds = ['active-companies-table', 'research-companies-table'];
+
+  tableIds.forEach((id,index)=>{
+    const table=document.getElementById(id);
+    const rows=[];
+    
+    // THからヘッダー情報を取得
+    const headerCells = Array.from(getTableHeadCells(id)).map(cell => getCellText(cell));
+    rows.push(headerCells);
+
+    const tbody = table.tBodies[0];
+    if (tbody) {
+        for(let row of tbody.rows){
+          const cells=[];
+          const cellColors=[]; 
+          for(let cell of row.cells) {
+              cells.push(getCellText(cell)); 
+              cellColors.push(cell.style.backgroundColor || ''); 
+          }
+          // セルの数がヘッダー数と一致しない場合は、データを補完して保存
+          while (cells.length < headerCells.length) {
+              cells.push('');
+              cellColors.push('');
+          }
+          rows.push({ data: cells, colors: cellColors }); 
+        }
+    }
+    data['table'+(index+1)]=rows; 
+  });
+  localStorage.setItem('tableData',JSON.stringify(data));
+  alert("データをブラウザに保存しました！");
+}
+
+window.onload=()=>{
+  const saved=localStorage.getItem('tableData');
+  
+  document.querySelector('h1').ondblclick = function() { makeEditableTitle(this); };
+  document.querySelectorAll('h2').forEach(h => {
+    h.ondblclick = function() { makeEditableTitle(this); };
+  });
+
+  const tableIds = ['active-companies-table', 'research-companies-table'];
+  
+  if(saved){
+    const data=JSON.parse(saved);
+    const texts=[document.querySelector('h1'), ...document.querySelectorAll('h2')];
+    data.texts.forEach((txt,i)=>{ 
+        if(texts[i]) texts[i].innerText=txt; 
+    });
+    
+    tableIds.forEach((id,index)=>{
+      const table=document.getElementById(id);
+      
+      // THEADの再構築
+      if (!table.tHead) table.createTHead();
+      if (table.tHead.rows.length === 0) table.tHead.insertRow();
+      const tHeadRow=table.tHead.rows[0];
+      
+      let tbody = table.tBodies[0];
+      if (!tbody) { tbody = table.createTBody(); }
+      
+      const allRows=data['table'+(index+1)]; 
+
+      const headerData = allRows[0] || [];
+      tHeadRow.innerHTML = '';
+      headerData.forEach(val => {
+        const th = document.createElement('th');
+        th.contentEditable = "true";
+        th.innerText = val;
+        tHeadRow.appendChild(th);
+      });
+
+      const dataRows = allRows.slice(1);
+      tbody.innerHTML = '';
+      
+      // TBODYの再構築: ヘッダー数に合わせてセルを確実に作成
+      dataRows.forEach(rowDataObj => {
+          const row = tbody.insertRow();
+          const expectedCols = headerData.length; 
+          
+          for (let i = 0; i < expectedCols; i++) {
+              const cell = row.insertCell(); 
+              cell.onclick = function() { selectCell(this); }; 
+              cell.ondblclick = function() { makeEditable(this); }; 
+              
+              const cellVal = rowDataObj.data[i] || ''; 
+              setCellText(cell, cellVal); 
+
+              if (rowDataObj.colors && rowDataObj.colors[i]) {
+                  cell.style.backgroundColor = rowDataObj.colors[i];
+              }
+          }
+      });
+    });
+  }
+
+  // 共通処理：データ有無にかかわらず、テーブル構造を最終チェック
+  tableIds.forEach(id => {
+    const table = document.getElementById(id);
+    let tbody = table.tBodies[0];
+    const headerCount = getTableHeadCells(id).length;
+
+    // データ行が全くない場合、初期行を追加
+    if (!tbody || tbody.rows.length === 0) {
+        if (!tbody) { tbody = table.createTBody(); }
+        const row = tbody.insertRow();
+        for (let i = 0; i < headerCount; i++) {
+            const cell = row.insertCell(); 
+            cell.onclick = function() { selectCell(this); }; 
+            cell.ondblclick = function() { makeEditable(this); }; 
+            wrapContent(cell); 
+        }
+    }
+  });
+
+  // 最終チェック：すべてのTDにイベント再設定
+  document.querySelectorAll('tbody td').forEach(cell => {
+      cell.onclick = function() { selectCell(this); }; 
+      cell.ondblclick = function() { makeEditable(this); };
+      wrapContent(cell, getCellText(cell)); 
+  });
+}
+
+function exportCSV(){
+  let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
+  const h2s=document.querySelectorAll('h2');
+  
+  h2s.forEach((h,index)=>{
+    csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
+    const tableId = index === 0 ? 'active-companies-table' : 'research-companies-table';
+    
+    if (index === 1) {
+        csv += '\n'; 
+    }
+
+    const headerCells = Array.from(getTableHeadCells(tableId)).map(cell => getCellText(cell).replace(/"/g,'""'));
+    csv+='"' + headerCells.join('","') + '"\n';
+
+    const tbody = getTableBody(tableId);
+    if (tbody) {
+        for(let row of tbody.rows){
+          let cells=[];
+          for(let cell of row.cells) cells.push(getCellText(cell).replace(/"/g,'""'));
+          csv+='"' + cells.join('","') + '"\n';
+        }
+    }
+    csv+='\n';
+  });
+  const blob=new Blob(['\ufeff', csv],{type:'text/csv;charset=utf-8'}); 
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='job_search_memo.csv'; a.click();
+}
+
+function importCSV(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  
+  reader.onload=e=>{
+    const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
+    if(lines.length<1) return;
+    
+    let tableIndex=-1, lineIndex=1; 
+    const h2s=document.querySelectorAll('h2');
+    const tableIds = ['active-companies-table', 'research-companies-table'];
+    
+    if (lines[0]) {
+        document.querySelector('h1').innerText = decodeCSVLine(lines[0])[0] || "就職活動メモ";
+        lineIndex++;
+    }
+
+    while (lineIndex < lines.length && lines[lineIndex].trim() === '') {
+        lineIndex++;
+    }
+
+    while(lineIndex < lines.length && tableIndex < 2){
+      tableIndex++;
+      const table = document.getElementById(tableIds[tableIndex]);
+
+      if(h2s[tableIndex] && lines[lineIndex]) {
+          const decodedLine = decodeCSVLine(lines[lineIndex]);
+          if (decodedLine.length === 1 && decodedLine[0] !== "" && !decodedLine[0].includes(',')) {
+              h2s[tableIndex].innerText = decodedLine[0];
+              lineIndex++; 
+          }
+      }
+      
+      while (lineIndex < lines.length && lines[lineIndex].trim() === '') {
+          lineIndex++;
+      }
+      
+      // THEADの再構築
+      if (!table.tHead) table.createTHead();
+      if (table.tHead.rows.length === 0) table.tHead.insertRow();
+      const tHeadRow = table.tHead.rows[0];
+      
+      let tbody = table.tBodies[0];
+      if (!tbody) { tbody = table.createTBody(); }
+      
+      tbody.innerHTML = '';
+      tHeadRow.innerHTML = '';
+      
+      let headerCells = [];
+      if(lineIndex < lines.length && lines[lineIndex]) {
+          headerCells = decodeCSVLine(lines[lineIndex]);
+          headerCells.forEach(h => { 
+              const th = document.createElement('th');
+              th.contentEditable = "true";
+              th.innerText = h;
+              tHeadRow.appendChild(th);
+          });
+          lineIndex++; 
+      }
+      
+      const expectedCols = tHeadRow.cells.length;
+
+      // TBODYの再構築
+      while(lineIndex < lines.length && lines[lineIndex]){
+        const rowCells = decodeCSVLine(lines[lineIndex]);
+        
+        if (rowCells.length === 1 && rowCells[0] !== "" && !rowCells[0].includes(',')) {
+            break;
+        }
+        if (lines[lineIndex].trim() === '') {
+            break;
+        }
+
+        const row = tbody.insertRow();
+        for (let i = 0; i < expectedCols; i++) {
+            const cell = row.insertCell(); 
+            const cellVal = rowCells[i] ? rowCells[i] : ''; 
+            
+            cell.onclick = function() { selectCell(this); }; 
+            cell.ondblclick = function() { makeEditable(this); }; 
+            setCellText(cell, cellVal); 
+        }
+        lineIndex++;
+      }
+      
+      lineIndex++; 
+    }
+    alert("CSVファイルをインポートしました！");
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>
