@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>就職活動メモ</title>
+<style>
+/* 🎨 デザインCSS - 最終完全安定版 (枠線、中央揃え、幅の固定を強制適用) */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --light-bg: #f8f9fa;
+  --border-color: #dee2e6;
+  --header-bg: #e9ecef;
+  
+  --color-yellow: #fff3cd; 
+  --color-green: #d4edda;
+  --color-red: #f8d7da;
+}
+body { 
+  font-family: 'Helvetica Neue', Arial, sans-serif; 
+  padding: 30px; 
+  background-color: var(--light-bg);
+  color: #333;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 { 
+  font-size: 28px; 
+  border-bottom: 3px solid var(--primary-color);
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+  color: #212529;
+  cursor: pointer; 
+}
+h2 {
+  font-size: 20px; 
+  margin-top: 30px; 
+  margin-bottom: 15px; 
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer; 
+}
+
+table { 
+  border-collapse: collapse; 
+  margin-bottom: 25px; 
+  width: 100%; 
+  table-layout: fixed !important; /* ★★★ TABLE LAYOUTを強制適用 ★★★ */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  border: 1px solid var(--border-color); 
+}
+
+/* ★★★ 枠線とセルの強制適用 ★★★ */
+th, td { 
+  border: 1px solid var(--border-color) !important; /* 枠線を強制適用 */
+  padding: 12px 15px; 
+  white-space: normal;
+  word-wrap: break-word;
+  vertical-align: middle; 
+  box-sizing: border-box; 
+  text-align: center; 
+}
+
+th { 
+  background-color: var(--header-bg); 
+  font-weight: bold; 
+  color: #495057; 
+  position: sticky; 
+  top: 0;
+  z-index: 10;
+  height: 60px; 
+}
+
+/* 🚩 TD共通スタイル (flexでラッパーを中央配置) */
+td {
+  padding: 0; 
+  height: 60px; 
+  position: relative; 
+  display: flex; /* flexで内部要素を制御 */
+  justify-content: center; /* 水平方向の中央揃え */
+  align-items: center; /* 垂直方向の中央揃え */
+  cursor: pointer; 
+  transition: background-color 0.2s, box-shadow 0.1s;
+}
+
+td.selected-cell {
+    box-shadow: 0 0 0 3px var(--primary-color) inset;
+    border-color: var(--primary-color) !important;
+}
+
+/* 🚩 セル内のコンテナ (内容を中央に配置するラッパー) */
+.cell-content-wrapper {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%; 
+  padding: 12px 15px; 
+  
+  /* 中央揃えを継承し、pre-wrapで改行を保持 */
+  white-space: pre-wrap; 
+  text-align: center; 
+}
+
+/* 🚩 編集用Input要素のスタイル */
+.cell-input {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  border: none;
+  background-color: #fffacd; 
+  padding: 12px 15px;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: center; 
+  outline: 1px solid var(--primary-color);
+  z-index: 20; 
+}
+
+/* ボタンなどのスタイル (変更なし) */
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+.table-controls {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+}
+.global-controls {
+    margin-top: 20px;
+    padding: 10px 0;
+}
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  font-weight: 500;
+}
+button:hover {
+  background-color: #0056b3;
+}
+button:active {
+  transform: scale(0.98);
+}
+.secondary-btn {
+  background-color: var(--secondary-color);
+}
+.secondary-btn:hover {
+  background-color: #5a6268;
+}
+
+.color-btn {
+    padding: 8px 10px; 
+    border-radius: 5px; 
+    margin-right: 5px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+.color-btn:hover {
+    transform: scale(1.05); 
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+.color-btn-yellow { background-color: var(--color-yellow); color: #856404; font-weight: bold;}
+.color-btn-green { background-color: var(--color-green); color: #155724; font-weight: bold;}
+.color-btn-red { background-color: var(--color-red); color: #721c24; font-weight: bold;}
+</style>
+</head>
+<body>
+
+    <h1 ondblclick="makeEditableTitle(this)">就職活動メモ</h1>
+
+    <div class="table-container">
+        <h2 ondblclick="makeEditableTitle(this)">動いている企業</h2> 
+        <table id="active-companies-table">
+            <thead>
+                <tr>
+                    <th contenteditable="true">企業名</th>
+                    <th contenteditable="true">業種</th>
+                    <th contenteditable="true">選考状況</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
+                    <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
+                    <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="button-group table-controls">
+            <button onclick="addRow('active-companies-table')">行追加</button>
+            <button onclick="deleteRow('active-companies-table')" class="secondary-btn">行削除</button>
+            <button onclick="addColumn('active-companies-table')">列追加</button>
+            <button onclick="deleteColumn('active-companies-table')">列削除</button>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="table-container">
+        <h2 ondblclick="makeEditableTitle(this)">情報収集中企業</h2>
+        <table id="research-companies-table">
+            <thead>
+                <tr>
+                    <th contenteditable="true">企業名</th>
+                    <th contenteditable="true">興味度</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
+                    <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="button-group table-controls">
+            <button onclick="addRow('research-companies-table')">行追加</button>
+            <button onclick="deleteRow('research-companies-table')" class="secondary-btn">行削除</button>
+            <button onclick="addColumn('research-companies-table')">列追加</button>
+            <button onclick="deleteColumn('research-companies-table')">列削除</button>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="button-group global-controls">
+        <button class="color-btn color-btn-yellow" onclick="applyColor('var(--color-yellow)')" title="イエロー">黄色</button>
+        <button class="color-btn color-btn-green" onclick="applyColor('var(--color-green)')" title="グリーン">緑色</button>
+        <button class="color-btn color-btn-red" onclick="applyColor('var(--color-red)')" title="レッド">赤色</button>
+        <button onclick="applyColor('')" class="secondary-btn">色をクリア</button>
+        
+        <hr style="width: 100%; border: none; border-bottom: 1px dashed #ccc; margin: 10px 0;">
+
+        <button onclick="saveData()">データ保存 (ブラウザ)</button>
+        <button onclick="exportCSV()" class="secondary-btn">CSVとしてエクスポート</button>
+        <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(event)">
+        <button onclick="document.getElementById('csv-file-input').click()" class="secondary-btn">CSVインポート</button>
+        <button onclick="resetAll()">全リセット</button>
+    </div>
+
+<script>
+let selectedCell = null;
+
+function getTableHeadCells(tableId) {
+    const table = document.getElementById(tableId);
+    if (table && table.tHead && table.tHead.rows.length > 0) {
+        return table.tHead.rows[0].cells;
+    }
+    return [];
+}
+
+function wrapContent(cell, text = '') {
+    if (cell.tagName === 'TH') {
+        cell.innerText = text;
+        return;
+    }
+    
+    let wrapper = cell.querySelector('.cell-content-wrapper');
+    
+    if (!wrapper) { 
+        wrapper = document.createElement('div');
+        wrapper.className = 'cell-content-wrapper';
+        
+        const existingText = cell.textContent.trim();
+        cell.textContent = ''; 
+        
+        cell.appendChild(wrapper);
+        wrapper.innerText = text || existingText; 
+    } else {
+        wrapper.innerText = text;
+    }
+}
+
+function getCellText(cell) {
+    if (cell.tagName === 'TH') {
+        return cell.innerText;
+    }
+    const wrapper = cell.querySelector('.cell-content-wrapper');
+    return wrapper ? wrapper.innerText : '';
+}
+
+function setCellText(cell, text) {
+    if (cell.tagName === 'TH') {
+        cell.innerText = text;
+        return;
+    }
+    
+    const wrapper = cell.querySelector('.cell-content-wrapper');
+    if (wrapper) {
+        wrapper.innerText = text;
+    } else {
+        wrapContent(cell, text);
+    }
+}
+
+function selectCell(cell) {
+    if (cell.tagName === 'TH' || cell.querySelector('input.cell-input')) return; 
+
+    if (selectedCell) {
+        selectedCell.classList.remove('selected-cell');
+    }
+    
+    if (selectedCell !== cell) {
+        cell.classList.add('selected-cell');
+        selectedCell = cell;
+    } else {
+        selectedCell = null;
+    }
+}
+
+function applyColor(colorVariable) {
+    if (!selectedCell) {
+        alert("色を変更したいセルを一度クリックして選択してください。");
+        return;
+    }
+    
+    if (selectedCell.tagName === 'TH') {
+        alert("項目名（ヘッダー）のセル
