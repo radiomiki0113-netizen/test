@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 最終・確定版 (ボタン配列・色分け・Excel風入力) */
+/* 🎨 デザインCSS - 最終・究極版 (ボタン配列の完全復元 & 色分け・Excel風入力の維持) */
 :root {
   --primary-color: #007bff; /* 青色（デフォルト色） */
   --secondary-color: #6c757d; /* 灰色（削除・リセットなどに使用） */
@@ -157,7 +157,7 @@ button:active {
   transform: scale(0.98);
 }
 
-/* グレーボタン (削除/リセット操作) */
+/* グレーボタン (削除/リセット/エクスポート/インポート操作) */
 .secondary-btn {
     background-color: var(--secondary-color); 
 }
@@ -253,11 +253,12 @@ button:active {
         <hr style="width: 100%; border: none; border-bottom: 1px dashed #ccc; margin: 10px 0;">
 
         <button onclick="saveData()">データ保存 (ブラウザ)</button>
-        <button onclick="exportCSV()">CSVとしてエクスポート</button>
+
+        <button onclick="exportCSV()" class="secondary-btn">CSVとしてエクスポート</button>
         <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(event)">
-        <button onclick="document.getElementById('csv-file-input').click()">CSVインポート</button>
+        <button onclick="document.getElementById('csv-file-input').click()" class="secondary-btn">CSVインポート</button>
         
-        <button onclick="resetAll()" class="secondary-btn">全リセット</button>
+        <button onclick="resetAll()">全リセット</button>
     </div>
 
 <script>
