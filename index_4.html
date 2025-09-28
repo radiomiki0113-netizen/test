@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 縦並び・中央揃え・入力バグ修正版 */
+/* 🎨 デザインCSS - 最終・最高品質版 (Excel風) */
 :root {
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
+  --primary-color: #007bff; /* 青色（ボタンのデフォルト色） */
+  --secondary-color: #6c757d; /* 灰色（色をクリアボタンなどに使用） */
   --light-bg: #f8f9fa;
   --border-color: #dee2e6;
   --header-bg: #e9ecef;
@@ -49,18 +49,18 @@ table {
   width: 100%; 
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   background-color: white;
-  border: 1px solid var(--border-color); /* テーブル外枠は維持 */
+  border: 1px solid var(--border-color);
 }
 
-/* ★★★ 縦並び風CSS: 枠線なし、中央揃え維持 ★★★ */
+/* ★★★ 縦並び風・中央揃えCSS ★★★ */
 th, td { 
-  border: none; /* セル間の枠線はなし */
-  padding: 12px 15px; 
+  border: none; 
+  padding: 12px 15px; /* セルの基本パディング */
   white-space: normal;
   word-wrap: break-word;
   vertical-align: middle; 
   box-sizing: border-box; 
-  text-align: center; /* ★★★ 中央揃えを維持 ★★★ */
+  text-align: center; /* 中央揃えを維持 */
 }
 
 th { 
@@ -77,46 +77,107 @@ th:last-child {
   border-right: none; 
 }
 
-/* 🚩 TD共通スタイル - 縦並びの再現 */
 td {
-  padding: 12px 15px;
   height: auto;
   cursor: pointer; 
   transition: background-color 0.2s, box-shadow 0.1s;
   display: table-cell; 
   border-bottom: 1px solid var(--border-color); 
   border-right: 1px solid var(--border-color); 
-  position: relative; /* 入力時のためにrelativeを維持 */
+  position: relative; 
 }
 td:last-child {
   border-right: none; 
 }
 
+/* セル選択時のスタイル（青い枠線）*/
 td.selected-cell {
     box-shadow: 0 0 0 3px var(--primary-color) inset;
     border-color: var(--primary-color) !important;
 }
 
-/* 🚩 編集用Input要素のスタイル (修正版) */
+/* 🚩 編集用Input要素のスタイル (Excel風: 背景色なし、枠線強調) */
 .cell-input {
-  /* セル全体を覆うのではなく、セル内に収まるように調整 */
-  width: 90%; 
-  height: auto;
-  
-  /* position: absolute; を削除し、セルの内容として表示する */
-  position: static; 
-  display: inline-block; 
+  /* セル内のパディングを考慮し、セル全体を埋めるように調整 */
+  width: 100%;
+  height: 100%;
+  position: absolute; /* 親要素のtd内で位置を絶対指定 */
+  top: 0;
+  left: 0;
   
   box-sizing: border-box;
   border: none;
-  background-color: #fffacd; 
-  padding: 10px; /* パディングを少し減らしてセル内に収まりやすくする */
+  background-color: inherit; /* セルが色付けされている場合はその色を引き継ぐ */
+  
+  /* セルと同じパディングを設定してテキストを中央に表示 */
+  padding: 12px 15px; 
+  
   font-family: inherit;
   font-size: inherit;
   text-align: center; 
-  outline: 1px solid var(--primary-color);
+  
+  /* ★★★ 入力時に青い枠線で強調 (Excel風) ★★★ */
+  outline: 2px solid var(--primary-color); 
+  outline-offset: -2px; /* 枠線をセルの内側に入れる */
+  
   z-index: 20; 
 }
+
+/* ボタンのスタイル (すべての操作ボタンを青色で統一) */
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+.table-controls {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+}
+.global-controls {
+    margin-top: 20px;
+    padding: 10px 0;
+}
+button {
+  background-color: var(--primary-color); 
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  font-weight: 500;
+}
+button:hover {
+  background-color: #0056b3;
+}
+button:active {
+  transform: scale(0.98);
+}
+.secondary-btn {
+    background-color: var(--secondary-color); /* 「色をクリア」ボタンにのみ使用 */
+}
+.secondary-btn:hover {
+    background-color: #5a6268;
+}
+
+.color-btn {
+    padding: 8px 10px; 
+    border-radius: 5px; 
+    margin-right: 5px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+.color-btn:hover {
+    transform: scale(1.05); 
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+.color-btn-yellow { background-color: var(--color-yellow); color: #856404; font-weight: bold;}
+.color-btn-green { background-color: var(--color-green); color: #155724; font-weight: bold;}
+.color-btn-red { background-color: var(--color-red); color: #721c24; font-weight: bold;}
 </style>
 </head>
 <body>
@@ -143,7 +204,7 @@ td.selected-cell {
         </table>
         <div class="button-group table-controls">
             <button onclick="addRow('active-companies-table')">行追加</button>
-            <button onclick="deleteRow('active-companies-table')" class="secondary-btn">行削除</button>
+            <button onclick="deleteRow('active-companies-table')">行削除</button>
             <button onclick="addColumn('active-companies-table')">列追加</button>
             <button onclick="deleteColumn('active-companies-table')">列削除</button>
         </div>
@@ -169,7 +230,7 @@ td.selected-cell {
         </table>
         <div class="button-group table-controls">
             <button onclick="addRow('research-companies-table')">行追加</button>
-            <button onclick="deleteRow('research-companies-table')" class="secondary-btn">行削除</button>
+            <button onclick="deleteRow('research-companies-table')">行削除</button>
             <button onclick="addColumn('research-companies-table')">列追加</button>
             <button onclick="deleteColumn('research-companies-table')">列削除</button>
         </div>
@@ -186,9 +247,9 @@ td.selected-cell {
         <hr style="width: 100%; border: none; border-bottom: 1px dashed #ccc; margin: 10px 0;">
 
         <button onclick="saveData()">データ保存 (ブラウザ)</button>
-        <button onclick="exportCSV()" class="secondary-btn">CSVとしてエクスポート</button>
+        <button onclick="exportCSV()">CSVとしてエクスポート</button>
         <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(event)">
-        <button onclick="document.getElementById('csv-file-input').click()" class="secondary-btn">CSVインポート</button>
+        <button onclick="document.getElementById('csv-file-input').click()">CSVインポート</button>
         <button onclick="resetAll()">全リセット</button>
     </div>
 
@@ -203,13 +264,13 @@ function getTableHeadCells(tableId) {
     return [];
 }
 
-// セルの内容操作は直接テキストに依存させる
 function wrapContent(cell, text = '') {
     cell.innerText = text;
 }
 
 function getCellText(cell) {
-    return cell.innerText;
+    const input = cell.querySelector('input');
+    return input ? input.value : cell.innerText;
 }
 
 function setCellText(cell, text) {
@@ -218,6 +279,7 @@ function setCellText(cell, text) {
 
 
 function selectCell(cell) {
+    // 編集中のセルは選択しない
     if (cell.tagName === 'TH' || cell.querySelector('input.cell-input')) return; 
 
     if (selectedCell) {
@@ -250,12 +312,11 @@ function applyColor(colorVariable) {
     selectedCell.classList.remove('selected-cell');
     selectedCell = null;
 
-    alert(`セルの色を${color === '' ? 'クリア' : color}に設定しました。忘れずに「データ保存」ボタンを押してください。`);
+    alert(`セルの色を${color === '' ? 'クリア' : color}に設定しました。`);
+    saveData(); // 色変更時も自動保存
 }
 
-// ★★★ セル編集機能のバグ修正版 ★★★
 function makeEditable(cell) {
-    // 既に編集中の場合は何もしない
     if (cell.querySelector('input')) return; 
     if (cell.tagName === 'TH') return; 
 
@@ -274,13 +335,20 @@ function makeEditable(cell) {
     input.className = 'cell-input';
     input.value = originalText;
     
+    // 入力中は親セルへのクリックイベントを無効にする
+    cell.onclick = null;
+    
     input.onblur = function() {
         const newText = this.value;
         const parentCell = this.parentElement;
         
-        // inputを削除し、新しいテキストをセルに戻す
         this.remove(); 
         setCellText(parentCell, newText);
+        
+        // 入力完了後、元のクリックイベントを復元
+        parentCell.onclick = function() { selectCell(this); }; 
+        
+        saveData(); // 入力終了時に自動保存
     };
 
     input.onkeydown = function(e) {
@@ -313,6 +381,7 @@ function makeEditableTitle(element) {
     input.onblur = function() {
         element.innerText = this.value;
         this.remove();
+        saveData(); 
     };
     input.onkeydown = function(e) {
         if (e.key === 'Enter') {
@@ -341,6 +410,7 @@ function addRow(tableId){
     cell.ondblclick = function() { makeEditable(this); }; 
     wrapContent(cell); 
   }
+  saveData();
 }
 
 function deleteRow(tableId){
@@ -355,6 +425,7 @@ function deleteRow(tableId){
         cell.style.backgroundColor = ''; 
     });
   }
+  saveData();
 }
 
 function addColumn(tableId){
@@ -391,6 +462,7 @@ function addColumn(tableId){
         wrapContent(cell);
       }
   }
+  saveData();
 }
 
 function deleteColumn(tableId){
@@ -407,54 +479,57 @@ function deleteColumn(tableId){
           }
         }
     }
+    saveData();
   } else {
       alert("最後の列は削除できません。");
   }
 }
 
 function resetAll(){
-    localStorage.removeItem('tableData'); 
+    if (confirm("本当に全てのデータをリセットしますか？この操作は元に戻せません。")) {
+        localStorage.removeItem('tableData'); 
 
-    document.querySelector('h1').innerText = "就職活動メモ";
-    document.querySelector('.table-container:nth-of-type(1) h2').innerText = "動いている企業";
-    document.querySelector('.table-container:nth-of-type(2) h2').innerText = "情報収集中企業";
+        document.querySelector('h1').innerText = "就職活動メモ";
+        document.querySelector('.table-container:nth-of-type(1) h2').innerText = "動いている企業";
+        document.querySelector('.table-container:nth-of-type(2) h2').innerText = "情報収集中企業";
 
-    const defaultHeaders = {
-        'active-companies-table': ['企業名', '業種', '選考状況'],
-        'research-companies-table': ['企業名', '興味度']
-    };
+        const defaultHeaders = {
+            'active-companies-table': ['企業名', '業種', '選考状況'],
+            'research-companies-table': ['企業名', '興味度']
+        };
 
-    ['active-companies-table','research-companies-table'].forEach(id => {
-        const table = document.getElementById(id);
-        
-        let tHeadRow;
-        if (table.tHead && table.tHead.rows.length > 0) {
-            tHeadRow = table.tHead.rows[0];
-        } else {
-            if (!table.tHead) table.createTHead();
-            tHeadRow = table.tHead.insertRow();
-        }
-        tHeadRow.innerHTML = '';
-        defaultHeaders[id].forEach(headerText => {
-            const th = document.createElement('th');
-            th.contentEditable = "true";
-            th.innerText = headerText;
-            tHeadRow.appendChild(th);
+        ['active-companies-table','research-companies-table'].forEach(id => {
+            const table = document.getElementById(id);
+            
+            let tHeadRow;
+            if (table.tHead && table.tHead.rows.length > 0) {
+                tHeadRow = table.tHead.rows[0];
+            } else {
+                if (!table.tHead) table.createTHead();
+                tHeadRow = table.tHead.insertRow();
+            }
+            tHeadRow.innerHTML = '';
+            defaultHeaders[id].forEach(headerText => {
+                const th = document.createElement('th');
+                th.contentEditable = "true";
+                th.innerText = headerText;
+                tHeadRow.appendChild(th);
+            });
+            
+            let tbody = table.tBodies[0];
+            if (!tbody) { tbody = table.createTBody(); }
+            tbody.innerHTML = '';
+            const row = tbody.insertRow();
+            const headerCount = defaultHeaders[id].length;
+            for (let i = 0; i < headerCount; i++) {
+                const cell = row.insertCell(); 
+                cell.onclick = function() { selectCell(this); }; 
+                cell.ondblclick = function() { makeEditable(this); }; 
+                wrapContent(cell); 
+            }
         });
-        
-        let tbody = table.tBodies[0];
-        if (!tbody) { tbody = table.createTBody(); }
-        tbody.innerHTML = '';
-        const row = tbody.insertRow();
-        const headerCount = defaultHeaders[id].length;
-        for (let i = 0; i < headerCount; i++) {
-            const cell = row.insertCell(); 
-            cell.onclick = function() { selectCell(this); }; 
-            cell.ondblclick = function() { makeEditable(this); }; 
-            wrapContent(cell); 
-        }
-    });
-    alert("全データをリセットし、初期状態に戻しました。ブラウザを再起動して開くと確実です。");
+        alert("全データをリセットし、初期状態に戻しました。ブラウザを再起動して開くと確実です。");
+    }
 }
 
 function saveData(){
@@ -489,7 +564,7 @@ function saveData(){
     data['table'+(index+1)]=rows; 
   });
   localStorage.setItem('tableData',JSON.stringify(data));
-  alert("データをブラウザに保存しました！");
+  // alert("データをブラウザに保存しました！"); // 自動保存のためアラートは削除
 }
 
 window.onload=()=>{
