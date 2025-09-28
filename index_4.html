@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 最終・最終版 (ボタン色分け復活 & Excel風入力) */
+/* 🎨 デザインCSS - 最終・確定版 (ボタン配列・色分け・Excel風入力) */
 :root {
   --primary-color: #007bff; /* 青色（デフォルト色） */
   --secondary-color: #6c757d; /* 灰色（削除・リセットなどに使用） */
@@ -121,7 +121,7 @@ td.selected-cell {
   z-index: 20; 
 }
 
-/* ★★★ ボタンのスタイル (色分け復活) ★★★ */
+/* ★★★ ボタンのスタイル (色分け維持) ★★★ */
 .button-group {
   display: flex;
   gap: 10px;
@@ -157,7 +157,7 @@ button:active {
   transform: scale(0.98);
 }
 
-/* ★★★ グレーボタン (削除/リセット操作) ★★★ */
+/* グレーボタン (削除/リセット操作) */
 .secondary-btn {
     background-color: var(--secondary-color); 
 }
@@ -173,8 +173,8 @@ button:active {
     border: 2px solid var(--border-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: transform 0.1s, box-shadow 0.1s;
-    background-color: white; /* 青ボタンのスタイルを上書き */
-    color: #333; /* 文字色を黒に */
+    background-color: white; 
+    color: #333; 
 }
 .color-btn:hover {
     transform: scale(1.05); 
@@ -209,9 +209,8 @@ button:active {
         </table>
         <div class="button-group table-controls">
             <button onclick="addRow('active-companies-table')">行追加</button>
-            <button onclick="addColumn('active-companies-table')">列追加</button>
-            
             <button onclick="deleteRow('active-companies-table')" class="secondary-btn">行削除</button>
+            <button onclick="addColumn('active-companies-table')">列追加</button>
             <button onclick="deleteColumn('active-companies-table')" class="secondary-btn">列削除</button>
         </div>
     </div>
@@ -236,9 +235,8 @@ button:active {
         </table>
         <div class="button-group table-controls">
             <button onclick="addRow('research-companies-table')">行追加</button>
-            <button onclick="addColumn('research-companies-table')">列追加</button>
-            
             <button onclick="deleteRow('research-companies-table')" class="secondary-btn">行削除</button>
+            <button onclick="addColumn('research-companies-table')">列追加</button>
             <button onclick="deleteColumn('research-companies-table')" class="secondary-btn">列削除</button>
         </div>
     </div>
