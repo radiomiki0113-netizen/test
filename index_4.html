@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 縦並びスタイル復元版 */
+/* 🎨 デザインCSS - 縦並び・中央揃え・入力バグ修正版 */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -47,13 +47,12 @@ table {
   border-collapse: collapse; 
   margin-bottom: 25px; 
   width: 100%; 
-  /* table-layout: fixed を削除 */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   background-color: white;
   border: 1px solid var(--border-color); /* テーブル外枠は維持 */
 }
 
-/* ★★★ 枠線と横並び強制を削除し、縦並び（標準のセル）に戻す ★★★ */
+/* ★★★ 縦並び風CSS: 枠線なし、中央揃え維持 ★★★ */
 th, td { 
   border: none; /* セル間の枠線はなし */
   padding: 12px 15px; 
@@ -61,7 +60,7 @@ th, td {
   word-wrap: break-word;
   vertical-align: middle; 
   box-sizing: border-box; 
-  text-align: center; 
+  text-align: center; /* ★★★ 中央揃えを維持 ★★★ */
 }
 
 th { 
@@ -72,11 +71,10 @@ th {
   top: 0;
   z-index: 10;
   height: auto; 
-  /* THのみ右に境界線を付けることで項目を区切る */
   border-right: 1px solid var(--border-color); 
 }
 th:last-child {
-  border-right: none; /* 最後のTHは右側の線を消す */
+  border-right: none; 
 }
 
 /* 🚩 TD共通スタイル - 縦並びの再現 */
@@ -85,12 +83,13 @@ td {
   height: auto;
   cursor: pointer; 
   transition: background-color 0.2s, box-shadow 0.1s;
-  display: table-cell; /* 標準のTDに戻す */
-  border-bottom: 1px solid var(--border-color); /* 行と行の間に薄い線だけ残す */
-  border-right: 1px solid var(--border-color); /* 列と列の間に薄い線だけ残す */
+  display: table-cell; 
+  border-bottom: 1px solid var(--border-color); 
+  border-right: 1px solid var(--border-color); 
+  position: relative; /* 入力時のためにrelativeを維持 */
 }
 td:last-child {
-  border-right: none; /* 最後のTDは右側の線を消す */
+  border-right: none; 
 }
 
 td.selected-cell {
@@ -98,79 +97,26 @@ td.selected-cell {
     border-color: var(--primary-color) !important;
 }
 
-/* 🚩 編集用Input要素のスタイル */
+/* 🚩 編集用Input要素のスタイル (修正版) */
 .cell-input {
-  width: 100%;
-  height: 100%;
-  position: absolute; /* 編集時のみ絶対配置でセルを覆う */
-  top: 0;
-  left: 0;
+  /* セル全体を覆うのではなく、セル内に収まるように調整 */
+  width: 90%; 
+  height: auto;
+  
+  /* position: absolute; を削除し、セルの内容として表示する */
+  position: static; 
+  display: inline-block; 
+  
   box-sizing: border-box;
   border: none;
   background-color: #fffacd; 
-  padding: 12px 15px;
+  padding: 10px; /* パディングを少し減らしてセル内に収まりやすくする */
   font-family: inherit;
   font-size: inherit;
   text-align: center; 
   outline: 1px solid var(--primary-color);
   z-index: 20; 
 }
-
-/* ボタンなどのスタイル (変更なし) */
-.button-group {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-}
-.table-controls {
-    border: 1px solid var(--border-color);
-    padding: 10px;
-    border-radius: 5px;
-    background-color: white;
-}
-.global-controls {
-    margin-top: 20px;
-    padding: 10px 0;
-}
-button {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  font-weight: 500;
-}
-button:hover {
-  background-color: #0056b3;
-}
-button:active {
-  transform: scale(0.98);
-}
-.secondary-btn {
-  background-color: var(--secondary-color);
-}
-.secondary-btn:hover {
-  background-color: #5a6268;
-}
-
-.color-btn {
-    padding: 8px 10px; 
-    border-radius: 5px; 
-    margin-right: 5px;
-    border: 2px solid var(--border-color);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.1s, box-shadow 0.1s;
-}
-.color-btn:hover {
-    transform: scale(1.05); 
-    box-shadow: 0 0 0 2px var(--primary-color);
-}
-.color-btn-yellow { background-color: var(--color-yellow); color: #856404; font-weight: bold;}
-.color-btn-green { background-color: var(--color-green); color: #155724; font-weight: bold;}
-.color-btn-red { background-color: var(--color-red); color: #721c24; font-weight: bold;}
 </style>
 </head>
 <body>
@@ -257,22 +203,18 @@ function getTableHeadCells(tableId) {
     return [];
 }
 
-// ★★★ 縦並び復元のため、セルの内容操作を直接テキストに依存させる ★★★
+// セルの内容操作は直接テキストに依存させる
 function wrapContent(cell, text = '') {
-    // 以前の flex/wrapper の処理を削除し、直接テキストを操作する
     cell.innerText = text;
 }
 
 function getCellText(cell) {
-    // THもTDも直接 innerText を読み込む
     return cell.innerText;
 }
 
 function setCellText(cell, text) {
-    // THもTDも直接 innerText に書き込む
     cell.innerText = text;
 }
-// ★★★ 縦並び復元のための修正ここまで ★★★
 
 
 function selectCell(cell) {
@@ -311,15 +253,21 @@ function applyColor(colorVariable) {
     alert(`セルの色を${color === '' ? 'クリア' : color}に設定しました。忘れずに「データ保存」ボタンを押してください。`);
 }
 
+// ★★★ セル編集機能のバグ修正版 ★★★
 function makeEditable(cell) {
-    if (cell.querySelector('input') || cell.tagName === 'TH') return; 
-    
+    // 既に編集中の場合は何もしない
+    if (cell.querySelector('input')) return; 
+    if (cell.tagName === 'TH') return; 
+
     if (selectedCell === cell) {
         cell.classList.remove('selected-cell');
         selectedCell = null;
     }
 
     const originalText = getCellText(cell);
+    
+    // セル内のテキストを消去し、代わりに input 要素を配置
+    cell.innerText = ''; 
     
     const input = document.createElement('input');
     input.type = 'text';
@@ -329,8 +277,10 @@ function makeEditable(cell) {
     input.onblur = function() {
         const newText = this.value;
         const parentCell = this.parentElement;
-        setCellText(parentCell, newText);
+        
+        // inputを削除し、新しいテキストをセルに戻す
         this.remove(); 
+        setCellText(parentCell, newText);
     };
 
     input.onkeydown = function(e) {
@@ -339,7 +289,6 @@ function makeEditable(cell) {
         }
     };
     
-    // セル内のテキストを非表示にする代わりに、inputがセル全体を覆うようにCSSで対応
     cell.appendChild(input);
     input.focus(); 
 }
@@ -401,7 +350,6 @@ function deleteRow(tableId){
   if(tbody.rows.length > 1) {
     tbody.deleteRow(-1);
   } else if (tbody.rows.length === 1) {
-    // 最後の行は削除せず、内容をクリアする
     Array.from(tbody.rows[0].cells).forEach(cell => {
         setCellText(cell, '');
         cell.style.backgroundColor = ''; 
@@ -422,13 +370,11 @@ function addColumn(tableId){
       tHeadRow = table.tHead.insertRow();
   }
   
-  // THを追加
   const th = document.createElement('th'); 
   th.innerText = `新規項目`;
   th.contentEditable="true"; 
   tHeadRow.appendChild(th);
   
-  // データ行にTDを追加
   for(let row of tbody.rows){ 
     const cell=row.insertCell(); 
     cell.onclick = function() { selectCell(this); }; 
@@ -436,10 +382,8 @@ function addColumn(tableId){
     wrapContent(cell);
   }
   
-  // データ行が全くない場合は1行追加し、セルを作成
   if (tbody.rows.length === 0) {
       const row = tbody.insertRow();
-      // ヘッダー数に合わせてセルを作成
       for (let i = 0; i < tHeadRow.cells.length; i++) {
         const cell = row.insertCell(); 
         cell.onclick = function() { selectCell(this); }; 
@@ -455,10 +399,8 @@ function deleteColumn(tableId){
   const ths = getTableHeadCells(tableId);
   
   if(ths.length > 1){ 
-    // THを削除
     ths[ths.length - 1].remove(); 
     if (tbody) {
-        // TDを削除
         for(let row of tbody.rows) {
           if (row.cells.length > 0) {
             row.deleteCell(-1); 
@@ -471,7 +413,6 @@ function deleteColumn(tableId){
 }
 
 function resetAll(){
-    // ★★★ ローカルストレージを最初にクリアする (最重要) ★★★
     localStorage.removeItem('tableData'); 
 
     document.querySelector('h1').innerText = "就職活動メモ";
@@ -486,7 +427,6 @@ function resetAll(){
     ['active-companies-table','research-companies-table'].forEach(id => {
         const table = document.getElementById(id);
         
-        // THEADを初期化
         let tHeadRow;
         if (table.tHead && table.tHead.rows.length > 0) {
             tHeadRow = table.tHead.rows[0];
@@ -502,7 +442,6 @@ function resetAll(){
             tHeadRow.appendChild(th);
         });
         
-        // TBODYを初期化
         let tbody = table.tBodies[0];
         if (!tbody) { tbody = table.createTBody(); }
         tbody.innerHTML = '';
@@ -528,7 +467,6 @@ function saveData(){
     const table=document.getElementById(id);
     const rows=[];
     
-    // THからヘッダー情報を取得
     const headerCells = Array.from(getTableHeadCells(id)).map(cell => getCellText(cell));
     rows.push(headerCells);
 
@@ -541,7 +479,6 @@ function saveData(){
               cells.push(getCellText(cell)); 
               cellColors.push(cell.style.backgroundColor || ''); 
           }
-          // セルの数がヘッダー数と一致しない場合は、データを補完して保存
           while (cells.length < headerCells.length) {
               cells.push('');
               cellColors.push('');
@@ -575,7 +512,6 @@ window.onload=()=>{
     tableIds.forEach((id,index)=>{
       const table=document.getElementById(id);
       
-      // THEADの再構築
       if (!table.tHead) table.createTHead();
       if (table.tHead.rows.length === 0) table.tHead.insertRow();
       const tHeadRow=table.tHead.rows[0];
@@ -597,10 +533,10 @@ window.onload=()=>{
       const dataRows = allRows.slice(1);
       tbody.innerHTML = '';
       
-      // TBODYの再構築: ヘッダー数に合わせてセルを確実に作成
+      const headerCount = headerData.length;
       dataRows.forEach(rowDataObj => {
           const row = tbody.insertRow();
-          const expectedCols = headerData.length; 
+          const expectedCols = headerCount; 
           
           for (let i = 0; i < expectedCols; i++) {
               const cell = row.insertCell(); 
@@ -618,13 +554,11 @@ window.onload=()=>{
     });
   }
 
-  // 共通処理：データ有無にかかわらず、テーブル構造を最終チェック
   tableIds.forEach(id => {
     const table = document.getElementById(id);
     let tbody = table.tBodies[0];
     const headerCount = getTableHeadCells(id).length;
 
-    // データ行が全くない場合、初期行を追加
     if (!tbody || tbody.rows.length === 0) {
         if (!tbody) { tbody = table.createTBody(); }
         const row = tbody.insertRow();
@@ -637,7 +571,6 @@ window.onload=()=>{
     }
   });
 
-  // 最終チェック：すべてのTDにイベント再設定
   document.querySelectorAll('tbody td').forEach(cell => {
       cell.onclick = function() { selectCell(this); }; 
       cell.ondblclick = function() { makeEditable(this); };
@@ -712,7 +645,6 @@ function importCSV(event){
           lineIndex++;
       }
       
-      // THEADの再構築
       if (!table.tHead) table.createTHead();
       if (table.tHead.rows.length === 0) table.tHead.insertRow();
       const tHeadRow = table.tHead.rows[0];
@@ -737,7 +669,6 @@ function importCSV(event){
       
       const expectedCols = tHeadRow.cells.length;
 
-      // TBODYの再構築
       while(lineIndex < lines.length && lines[lineIndex]){
         const rowCells = decodeCSVLine(lines[lineIndex]);
         
