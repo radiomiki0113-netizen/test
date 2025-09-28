@@ -53,16 +53,14 @@ table {
   border: 1px solid var(--border-color); 
 }
 
-/* ★★★ CSS修正：THとTDへの枠線適用を強化 ★★★ */
 th, td { 
-  border: 1px solid var(--border-color) !important; /* !importantで強制適用 */
-  padding: 12px 15px; /* THとTDで統一 */
+  border: 1px solid var(--border-color) !important;
+  padding: 12px 15px; 
   white-space: normal;
   word-wrap: break-word;
   vertical-align: middle; 
   box-sizing: border-box; 
 }
-/* ★★★ ここまで修正 ★★★ */
 
 th { 
   background-color: var(--header-bg); 
@@ -72,12 +70,11 @@ th {
   top: 0;
   z-index: 10;
   text-align: center; 
-  height: 60px; /* THの高さもTDと合わせる */
+  height: 60px; 
 }
 
-/* 🚩 TD共通スタイル */
 td {
-  padding: 0; /* paddingを0に戻し、wrapperで調整 */
+  padding: 0; 
   height: 60px; 
   position: relative; 
   display: flex;
@@ -87,13 +84,11 @@ td {
   transition: background-color 0.2s, box-shadow 0.1s;
 }
 
-/* 🚩 セル選択時のハイライト */
 td.selected-cell {
     box-shadow: 0 0 0 3px var(--primary-color) inset;
     border-color: var(--primary-color) !important;
 }
 
-/* 🚩 セル内のコンテナ (内容を中央に配置するラッパー) */
 .cell-content-wrapper {
   box-sizing: border-box;
   width: 100%;
@@ -105,7 +100,6 @@ td.selected-cell {
   text-align: center !important; 
 }
 
-/* 🚩 編集用Input要素のスタイル */
 .cell-input {
   width: 100%;
   height: 100%;
@@ -123,7 +117,6 @@ td.selected-cell {
   z-index: 20; 
 }
 
-/* ボタンなどのスタイル */
 .button-group {
   display: flex;
   gap: 10px;
@@ -449,7 +442,6 @@ function addRow(tableId){
     cell.onclick = function() { selectCell(this); }; 
     cell.ondblclick = function() { makeEditable(this); }; 
     wrapContent(cell); 
-    // JavaScriptでの動的追加時にも枠線を適用（念のため残す）
     cell.style.border = '1px solid var(--border-color)';
   }
 }
@@ -493,7 +485,6 @@ function addColumn(tableId){
     cell.onclick = function() { selectCell(this); }; 
     cell.ondblclick = function() { makeEditable(this); }; 
     wrapContent(cell);
-    // JavaScriptでの動的追加時にも枠線を適用（念のため残す）
     cell.style.border = '1px solid var(--border-color)'; 
   }
   
@@ -503,7 +494,6 @@ function addColumn(tableId){
       cell.onclick = function() { selectCell(this); }; 
       cell.ondblclick = function() { makeEditable(this); }; 
       wrapContent(cell);
-      // JavaScriptでの動的追加時にも枠線を適用（念のため残す）
       cell.style.border = '1px solid var(--border-color)'; 
   }
 }
@@ -573,7 +563,6 @@ function resetAll(){
             cell.onclick = function() { selectCell(this); }; 
             cell.ondblclick = function() { makeEditable(this); }; 
             wrapContent(cell); 
-            // 初期化時も枠線を適用
             cell.style.border = '1px solid var(--border-color)';
         }
     });
@@ -655,22 +644,32 @@ window.onload=()=>{
       const dataRows = allRows.slice(1);
       tbody.innerHTML = '';
       
-      // TBODYの再構築
+      // ★★★ 修正箇所：TBODYの再構築ロジックを修正 ★★★
       dataRows.forEach(rowDataObj => {
           const row = tbody.insertRow();
-          rowDataObj.data.forEach((cellVal, i) => { 
+          // ヘッダーの数（=期待される列数）でループを回す
+          const expectedCols = headerData.length; 
+          
+          for (let i = 0; i < expectedCols; i++) {
               const cell = row.insertCell(); 
               cell.onclick = function() { selectCell(this); }; 
               cell.ondblclick = function() { makeEditable(this); }; 
+              
+              // 保存されたデータがあればセット
+              const cellVal = rowDataObj.data[i] || ''; 
+              setCellText(cell, cellVal); 
 
               if (rowDataObj.colors && rowDataObj.colors[i]) {
                   cell.style.backgroundColor = rowDataObj.colors[i];
               }
               
-              setCellText(cell, cellVal); 
-          });
+              // 枠線はCSSで強制適用されるが、念のためここでも適用
+              cell.style.border = '1px solid var(--border-color)';
+          }
       });
+      // ★★★ 修正ここまで ★★★
 
+      // 最初の行が空だった場合（データ行が全くない場合）の処理
       if (tbody.rows.length === 0 && headerData.length > 0) {
         const row = tbody.insertRow();
         headerData.forEach(() => { 
@@ -678,12 +677,13 @@ window.onload=()=>{
             cell.onclick = function() { selectCell(this); }; 
             cell.ondblclick = function() { makeEditable(this); }; 
             wrapContent(cell); 
+            cell.style.border = '1px solid var(--border-color)';
         });
       }
     });
   }
 
-  // ★★★ 最終チェック：すべてのTDに枠線を強制適用 ★★★
+  // 最終チェック：すべてのTDに枠線を強制適用
   document.querySelectorAll('tbody td').forEach(cell => {
       cell.onclick = function() { selectCell(this); }; 
       cell.ondblclick = function() { makeEditable(this); };
