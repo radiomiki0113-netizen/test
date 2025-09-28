@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 最終・究極版 (ボタン配列の完全復元 & 色分け・Excel風入力の維持) */
+/* 🎨 デザインCSS - 最終・機能復元版 */
 :root {
   --primary-color: #007bff; /* 青色（デフォルト色） */
   --secondary-color: #6c757d; /* 灰色（削除・リセットなどに使用） */
@@ -52,7 +52,6 @@ table {
   border: 1px solid var(--border-color);
 }
 
-/* ★★★ 縦並び風・中央揃えCSS ★★★ */
 th, td { 
   border: none; 
   padding: 12px 15px; 
@@ -60,7 +59,7 @@ th, td {
   word-wrap: break-word;
   vertical-align: middle; 
   box-sizing: border-box; 
-  text-align: center; /* 中央揃えを維持 */
+  text-align: center; 
 }
 
 th { 
@@ -90,13 +89,11 @@ td:last-child {
   border-right: none; 
 }
 
-/* セル選択時のスタイル（青い枠線）*/
 td.selected-cell {
     box-shadow: 0 0 0 3px var(--primary-color) inset;
     border-color: var(--primary-color) !important;
 }
 
-/* 🚩 編集用Input要素のスタイル (Excel風: 背景色なし、枠線強調) */
 .cell-input {
   width: 100%;
   height: 100%;
@@ -114,14 +111,12 @@ td.selected-cell {
   font-size: inherit;
   text-align: center; 
   
-  /* 入力時に青い枠線で強調 (Excel風) */
   outline: 2px solid var(--primary-color); 
   outline-offset: -2px; 
   
   z-index: 20; 
 }
 
-/* ★★★ ボタンのスタイル (色分け維持) ★★★ */
 .button-group {
   display: flex;
   gap: 10px;
@@ -139,7 +134,6 @@ td.selected-cell {
     padding: 10px 0;
 }
 
-/* 青色ボタン (デフォルト) */
 button {
   background-color: var(--primary-color); 
   color: white;
@@ -157,7 +151,6 @@ button:active {
   transform: scale(0.98);
 }
 
-/* グレーボタン (削除/リセット/エクスポート/インポート操作) */
 .secondary-btn {
     background-color: var(--secondary-color); 
 }
@@ -165,7 +158,6 @@ button:active {
     background-color: #5a6268;
 }
 
-/* 色ボタン */
 .color-btn {
     padding: 8px 10px; 
     border-radius: 5px; 
@@ -321,7 +313,7 @@ function applyColor(colorVariable) {
     selectedCell = null;
 
     alert(`セルの色を${color === '' ? 'クリア' : color}に設定しました。`);
-    saveData(); // 色変更時も自動保存
+    saveData(); 
 }
 
 function makeEditable(cell) {
@@ -335,7 +327,6 @@ function makeEditable(cell) {
 
     const originalText = getCellText(cell);
     
-    // セル内のテキストを消去し、代わりに input 要素を配置
     cell.innerText = ''; 
     
     const input = document.createElement('input');
@@ -343,7 +334,6 @@ function makeEditable(cell) {
     input.className = 'cell-input';
     input.value = originalText;
     
-    // 入力中は親セルへのクリックイベントを無効にする
     cell.onclick = null;
     
     input.onblur = function() {
@@ -353,10 +343,9 @@ function makeEditable(cell) {
         this.remove(); 
         setCellText(parentCell, newText);
         
-        // 入力完了後、元のクリックイベントを復元
         parentCell.onclick = function() { selectCell(this); }; 
         
-        saveData(); // 入力終了時に自動保存
+        saveData(); 
     };
 
     input.onkeydown = function(e) {
@@ -577,10 +566,12 @@ function saveData(){
 window.onload=()=>{
   const saved=localStorage.getItem('tableData');
   
+  // ★★★ サブタイトル編集機能の復元 ★★★
   document.querySelector('h1').ondblclick = function() { makeEditableTitle(this); };
   document.querySelectorAll('h2').forEach(h => {
     h.ondblclick = function() { makeEditableTitle(this); };
   });
+  // ★★★ 復元ここまで ★★★
 
   const tableIds = ['active-companies-table', 'research-companies-table'];
   
