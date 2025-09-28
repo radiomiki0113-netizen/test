@@ -5,15 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 最終完全安定版 */
+/* 🎨 デザインCSS - 最終完全安定版 (枠線強制適用) */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
   --light-bg: #f8f9fa;
   --border-color: #dee2e6;
-  --header-bg: #e9ecef; /* ヘッダー(th)の背景色 */
+  --header-bg: #e9ecef;
   
-  /* 🚩 セルカラー用の定義 */
   --color-yellow: #fff3cd; 
   --color-green: #d4edda;
   --color-red: #f8d7da;
@@ -51,15 +50,21 @@ table {
   table-layout: fixed; 
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   background-color: white;
-  border: 1px solid var(--border-color); /* ★ 全体の外枠線 ★ */
+  border: 1px solid var(--border-color); 
 }
 
-th { 
-  border: 1px solid var(--border-color);
-  padding: 12px 15px; 
+/* ★★★ CSS修正：THとTDへの枠線適用を強化 ★★★ */
+th, td { 
+  border: 1px solid var(--border-color) !important; /* !importantで強制適用 */
+  padding: 12px 15px; /* THとTDで統一 */
   white-space: normal;
   word-wrap: break-word;
   vertical-align: middle; 
+  box-sizing: border-box; 
+}
+/* ★★★ ここまで修正 ★★★ */
+
+th { 
   background-color: var(--header-bg); 
   font-weight: bold; 
   color: #495057; 
@@ -67,23 +72,17 @@ th {
   top: 0;
   z-index: 10;
   text-align: center; 
+  height: 60px; /* THの高さもTDと合わせる */
 }
 
-/* 🚩 TD共通スタイル (中央揃えとセルの高さ) */
+/* 🚩 TD共通スタイル */
 td {
-  border: 1px solid var(--border-color);
-  padding: 0; 
+  padding: 0; /* paddingを0に戻し、wrapperで調整 */
   height: 60px; 
-  white-space: normal;
-  word-wrap: break-word;
   position: relative; 
-  
-  /* データセルはFlexBoxで完璧に中央揃え */
   display: flex;
   justify-content: center; 
   align-items: center; 
-  
-  box-sizing: border-box;
   cursor: pointer; 
   transition: background-color 0.2s, box-shadow 0.1s;
 }
@@ -91,7 +90,7 @@ td {
 /* 🚩 セル選択時のハイライト */
 td.selected-cell {
     box-shadow: 0 0 0 3px var(--primary-color) inset;
-    border-color: var(--primary-color);
+    border-color: var(--primary-color) !important;
 }
 
 /* 🚩 セル内のコンテナ (内容を中央に配置するラッパー) */
@@ -450,7 +449,7 @@ function addRow(tableId){
     cell.onclick = function() { selectCell(this); }; 
     cell.ondblclick = function() { makeEditable(this); }; 
     wrapContent(cell); 
-    // ★ 追記：行追加時にも枠線を確実に適用 ★
+    // JavaScriptでの動的追加時にも枠線を適用（念のため残す）
     cell.style.border = '1px solid var(--border-color)';
   }
 }
@@ -494,7 +493,7 @@ function addColumn(tableId){
     cell.onclick = function() { selectCell(this); }; 
     cell.ondblclick = function() { makeEditable(this); }; 
     wrapContent(cell);
-    // ★ 修正済み：列追加時にも枠線を確実に適用 ★
+    // JavaScriptでの動的追加時にも枠線を適用（念のため残す）
     cell.style.border = '1px solid var(--border-color)'; 
   }
   
@@ -504,7 +503,7 @@ function addColumn(tableId){
       cell.onclick = function() { selectCell(this); }; 
       cell.ondblclick = function() { makeEditable(this); }; 
       wrapContent(cell);
-      // ★ 修正済み：空の場合も枠線を確実に適用 ★
+      // JavaScriptでの動的追加時にも枠線を適用（念のため残す）
       cell.style.border = '1px solid var(--border-color)'; 
   }
 }
@@ -574,6 +573,8 @@ function resetAll(){
             cell.onclick = function() { selectCell(this); }; 
             cell.ondblclick = function() { makeEditable(this); }; 
             wrapContent(cell); 
+            // 初期化時も枠線を適用
+            cell.style.border = '1px solid var(--border-color)';
         }
     });
     localStorage.removeItem('tableData'); 
@@ -682,10 +683,14 @@ window.onload=()=>{
     });
   }
 
+  // ★★★ 最終チェック：すべてのTDに枠線を強制適用 ★★★
   document.querySelectorAll('tbody td').forEach(cell => {
       cell.onclick = function() { selectCell(this); }; 
       cell.ondblclick = function() { makeEditable(this); };
       wrapContent(cell, getCellText(cell)); 
+      
+      // CSSを上書きする形で、枠線を確実に適用
+      cell.style.border = '1px solid var(--border-color)';
   });
 }
 
