@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 最終・最高品質版 (Excel風) */
+/* 🎨 デザインCSS - 最終・最終版 (ボタン色分け復活 & Excel風入力) */
 :root {
-  --primary-color: #007bff; /* 青色（ボタンのデフォルト色） */
-  --secondary-color: #6c757d; /* 灰色（色をクリアボタンなどに使用） */
+  --primary-color: #007bff; /* 青色（デフォルト色） */
+  --secondary-color: #6c757d; /* 灰色（削除・リセットなどに使用） */
   --light-bg: #f8f9fa;
   --border-color: #dee2e6;
   --header-bg: #e9ecef;
@@ -55,7 +55,7 @@ table {
 /* ★★★ 縦並び風・中央揃えCSS ★★★ */
 th, td { 
   border: none; 
-  padding: 12px 15px; /* セルの基本パディング */
+  padding: 12px 15px; 
   white-space: normal;
   word-wrap: break-word;
   vertical-align: middle; 
@@ -98,32 +98,30 @@ td.selected-cell {
 
 /* 🚩 編集用Input要素のスタイル (Excel風: 背景色なし、枠線強調) */
 .cell-input {
-  /* セル内のパディングを考慮し、セル全体を埋めるように調整 */
   width: 100%;
   height: 100%;
-  position: absolute; /* 親要素のtd内で位置を絶対指定 */
+  position: absolute; 
   top: 0;
   left: 0;
   
   box-sizing: border-box;
   border: none;
-  background-color: inherit; /* セルが色付けされている場合はその色を引き継ぐ */
+  background-color: inherit; 
   
-  /* セルと同じパディングを設定してテキストを中央に表示 */
   padding: 12px 15px; 
   
   font-family: inherit;
   font-size: inherit;
   text-align: center; 
   
-  /* ★★★ 入力時に青い枠線で強調 (Excel風) ★★★ */
+  /* 入力時に青い枠線で強調 (Excel風) */
   outline: 2px solid var(--primary-color); 
-  outline-offset: -2px; /* 枠線をセルの内側に入れる */
+  outline-offset: -2px; 
   
   z-index: 20; 
 }
 
-/* ボタンのスタイル (すべての操作ボタンを青色で統一) */
+/* ★★★ ボタンのスタイル (色分け復活) ★★★ */
 .button-group {
   display: flex;
   gap: 10px;
@@ -140,6 +138,8 @@ td.selected-cell {
     margin-top: 20px;
     padding: 10px 0;
 }
+
+/* 青色ボタン (デフォルト) */
 button {
   background-color: var(--primary-color); 
   color: white;
@@ -156,13 +156,16 @@ button:hover {
 button:active {
   transform: scale(0.98);
 }
+
+/* ★★★ グレーボタン (削除/リセット操作) ★★★ */
 .secondary-btn {
-    background-color: var(--secondary-color); /* 「色をクリア」ボタンにのみ使用 */
+    background-color: var(--secondary-color); 
 }
 .secondary-btn:hover {
     background-color: #5a6268;
 }
 
+/* 色ボタン */
 .color-btn {
     padding: 8px 10px; 
     border-radius: 5px; 
@@ -170,6 +173,8 @@ button:active {
     border: 2px solid var(--border-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: transform 0.1s, box-shadow 0.1s;
+    background-color: white; /* 青ボタンのスタイルを上書き */
+    color: #333; /* 文字色を黒に */
 }
 .color-btn:hover {
     transform: scale(1.05); 
@@ -204,9 +209,10 @@ button:active {
         </table>
         <div class="button-group table-controls">
             <button onclick="addRow('active-companies-table')">行追加</button>
-            <button onclick="deleteRow('active-companies-table')">行削除</button>
             <button onclick="addColumn('active-companies-table')">列追加</button>
-            <button onclick="deleteColumn('active-companies-table')">列削除</button>
+            
+            <button onclick="deleteRow('active-companies-table')" class="secondary-btn">行削除</button>
+            <button onclick="deleteColumn('active-companies-table')" class="secondary-btn">列削除</button>
         </div>
     </div>
 
@@ -230,9 +236,10 @@ button:active {
         </table>
         <div class="button-group table-controls">
             <button onclick="addRow('research-companies-table')">行追加</button>
-            <button onclick="deleteRow('research-companies-table')">行削除</button>
             <button onclick="addColumn('research-companies-table')">列追加</button>
-            <button onclick="deleteColumn('research-companies-table')">列削除</button>
+            
+            <button onclick="deleteRow('research-companies-table')" class="secondary-btn">行削除</button>
+            <button onclick="deleteColumn('research-companies-table')" class="secondary-btn">列削除</button>
         </div>
     </div>
 
@@ -242,6 +249,7 @@ button:active {
         <button class="color-btn color-btn-yellow" onclick="applyColor('var(--color-yellow)')" title="イエロー">黄色</button>
         <button class="color-btn color-btn-green" onclick="applyColor('var(--color-green)')" title="グリーン">緑色</button>
         <button class="color-btn color-btn-red" onclick="applyColor('var(--color-red)')" title="レッド">赤色</button>
+        
         <button onclick="applyColor('')" class="secondary-btn">色をクリア</button>
         
         <hr style="width: 100%; border: none; border-bottom: 1px dashed #ccc; margin: 10px 0;">
@@ -250,7 +258,8 @@ button:active {
         <button onclick="exportCSV()">CSVとしてエクスポート</button>
         <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(event)">
         <button onclick="document.getElementById('csv-file-input').click()">CSVインポート</button>
-        <button onclick="resetAll()">全リセット</button>
+        
+        <button onclick="resetAll()" class="secondary-btn">全リセット</button>
     </div>
 
 <script>
@@ -564,7 +573,6 @@ function saveData(){
     data['table'+(index+1)]=rows; 
   });
   localStorage.setItem('tableData',JSON.stringify(data));
-  // alert("データをブラウザに保存しました！"); // 自動保存のためアラートは削除
 }
 
 window.onload=()=>{
