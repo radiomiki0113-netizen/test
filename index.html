@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 最終安定版 */
+/* 🎨 デザインCSS - 最終完全安定版 */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -51,7 +51,7 @@ table {
   table-layout: fixed; 
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   background-color: white;
-  border: 1px solid var(--border-color); /* 外枠線あり */
+  border: 1px solid var(--border-color); /* ★ 全体の外枠線 ★ */
 }
 
 th { 
@@ -69,7 +69,7 @@ th {
   text-align: center; 
 }
 
-/* 🚩 TD共通スタイル (完璧な中央揃えとセルの高さの維持) */
+/* 🚩 TD共通スタイル (中央揃えとセルの高さ) */
 td {
   border: 1px solid var(--border-color);
   padding: 0; 
@@ -450,6 +450,8 @@ function addRow(tableId){
     cell.onclick = function() { selectCell(this); }; 
     cell.ondblclick = function() { makeEditable(this); }; 
     wrapContent(cell); 
+    // ★ 追記：行追加時にも枠線を確実に適用 ★
+    cell.style.border = '1px solid var(--border-color)';
   }
 }
 
@@ -492,6 +494,8 @@ function addColumn(tableId){
     cell.onclick = function() { selectCell(this); }; 
     cell.ondblclick = function() { makeEditable(this); }; 
     wrapContent(cell);
+    // ★ 修正済み：列追加時にも枠線を確実に適用 ★
+    cell.style.border = '1px solid var(--border-color)'; 
   }
   
   if (tbody.rows.length === 0) {
@@ -500,6 +504,8 @@ function addColumn(tableId){
       cell.onclick = function() { selectCell(this); }; 
       cell.ondblclick = function() { makeEditable(this); }; 
       wrapContent(cell);
+      // ★ 修正済み：空の場合も枠線を確実に適用 ★
+      cell.style.border = '1px solid var(--border-color)'; 
   }
 }
 
