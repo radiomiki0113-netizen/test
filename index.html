@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 最終完全版 */
+/* 🎨 デザインCSS - 安定版 */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
   --light-bg: #f8f9fa;
   --border-color: #dee2e6;
-  --header-bg: #f5f5f5; /* 項目行に目立たない薄い背景色を適用 */
+  --header-bg: #e9ecef; /* ヘッダー(th)の背景色 */
   
   /* 🚩 セルカラー用の定義 */
   --color-yellow: #fff3cd; 
@@ -52,30 +52,32 @@ table {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   background-color: white;
 }
-
-/* ⚠️ ヘッダー(th)は削除されたため、このスタイルは適用されません */
+/* 元のTHのスタイル */
 th { 
   border: 1px solid var(--border-color);
   padding: 12px 15px; 
-  background-color: white; 
-  font-weight: normal; 
-  color: #333; 
+  white-space: normal;
+  word-wrap: break-word;
+  vertical-align: middle; 
+  background-color: var(--header-bg); 
+  font-weight: bold; 
+  color: #495057; 
   position: sticky; 
   top: 0;
   z-index: 10;
   text-align: center; 
 }
 
-/* 🚩 TD共通スタイル (中央揃えとセルの高さの維持) */
+/* 🚩 TD共通スタイル (完璧な中央揃えとセルの高さの維持) */
 td {
   border: 1px solid var(--border-color);
   padding: 0; 
-  height: 60px; /* 高さを確保 */
+  height: 60px; 
   white-space: normal;
   word-wrap: break-word;
   position: relative; 
   
-  /* ★★★ 完璧な中央揃えを実現するFlexBox ★★★ */
+  /* データセルはFlexBoxで完璧に中央揃え */
   display: flex;
   justify-content: center; 
   align-items: center; 
@@ -84,19 +86,6 @@ td {
   cursor: pointer; 
   transition: background-color 0.2s, box-shadow 0.1s;
 }
-
-/* ★★★ 修正箇所: 項目行(元ヘッダー)のTDスタイル ★★★ */
-.header-row td {
-    background-color: var(--header-bg); /* 少し背景色をつけて項目行だと分かるように */
-    font-weight: bold; /* 文字を太く */
-    color: #333;
-    position: sticky; /* スクロールしても追従する */
-    top: 0;
-    z-index: 10;
-    cursor: text; /* ダブルクリックで項目名編集ができるように */
-}
-/* ★★★ 修正箇所ここまで ★★★ */
-
 
 /* 🚩 セル選択時のハイライト */
 td.selected-cell {
@@ -198,12 +187,14 @@ button:active {
     <div class="table-container">
         <h2 ondblclick="makeEditableTitle(this)">動いている企業 (中央揃え項目のみ)</h2>
         <table id="active-companies-table">
-            <tbody>
-                <tr class="header-row">
-                    <td contenteditable="true" onclick="selectCell(this)" ondblclick="makeEditable(this)">企業名</td>
-                    <td contenteditable="true" onclick="selectCell(this)" ondblclick="makeEditable(this)">業種</td>
-                    <td contenteditable="true" onclick="selectCell(this)" ondblclick="makeEditable(this)">選考状況</td>
+            <thead>
+                <tr>
+                    <th contenteditable="true">企業名</th>
+                    <th contenteditable="true">業種</th>
+                    <th contenteditable="true">選考状況</th>
                 </tr>
+            </thead>
+            <tbody>
                 <tr>
                     <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
                     <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
@@ -215,7 +206,7 @@ button:active {
             <button onclick="addRow('active-companies-table')">行追加</button>
             <button onclick="deleteRow('active-companies-table')" class="secondary-btn">行削除</button>
             <button onclick="addColumn('active-companies-table')">列追加</button>
-            <button onclick="deleteColumn('active-companies-table')" class="secondary-btn">列削除</button>
+            <button onclick="deleteColumn('active-companies-table')">列削除</button>
         </div>
     </div>
 
@@ -224,11 +215,13 @@ button:active {
     <div class="table-container">
         <h2 ondblclick="makeEditableTitle(this)">情報収集中企業 (中央揃え項目のみ)</h2>
         <table id="research-companies-table">
-            <tbody>
-                <tr class="header-row">
-                    <td contenteditable="true" onclick="selectCell(this)" ondblclick="makeEditable(this)">企業名</td>
-                    <td contenteditable="true" onclick="selectCell(this)" ondblclick="makeEditable(this)">興味度</td>
+            <thead>
+                <tr>
+                    <th contenteditable="true">企業名</th>
+                    <th contenteditable="true">興味度</th>
                 </tr>
+            </thead>
+            <tbody>
                 <tr>
                     <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
                     <td onclick="selectCell(this)" ondblclick="makeEditable(this)"></td>
@@ -239,7 +232,7 @@ button:active {
             <button onclick="addRow('research-companies-table')">行追加</button>
             <button onclick="deleteRow('research-companies-table')" class="secondary-btn">行削除</button>
             <button onclick="addColumn('research-companies-table')">列追加</button>
-            <button onclick="deleteColumn('research-companies-table')" class="secondary-btn">列削除</button>
+            <button onclick="deleteColumn('research-companies-table')">列削除</button>
         </div>
     </div>
 
@@ -265,28 +258,27 @@ button:active {
 let selectedCell = null;
 
 // ------------------------------------
-// 🚩 1. ヘッダーの定義を「最初の行」に変更
+// 🚩 1. ヘッダーの定義
 // ------------------------------------
-
-function getHeaderRow(tableId) {
-    const table = document.getElementById(tableId);
-    // TBODYの最初の行をヘッダーとして扱う
-    if (table && table.tBodies.length > 0 && table.tBodies[0].rows.length > 0) {
-        return table.tBodies[0].rows[0];
-    }
-    return null;
-}
 
 function getTableHeadCells(tableId) {
-    const headerRow = getHeaderRow(tableId);
-    return headerRow ? headerRow.cells : [];
+    const table = document.getElementById(tableId);
+    if (table && table.tHead && table.tHead.rows.length > 0) {
+        return table.tHead.rows[0].cells;
+    }
+    return [];
 }
 
 // ------------------------------------
-// 🚩 2. セル内容操作関数
+// 🚩 2. セル内容操作関数 (TH/TDを区別)
 // ------------------------------------
 
 function wrapContent(cell, text = '') {
+    if (cell.tagName === 'TH') {
+        cell.innerText = text;
+        return;
+    }
+    
     let wrapper = cell.querySelector('.cell-content-wrapper');
     
     if (!wrapper) { 
@@ -305,11 +297,19 @@ function wrapContent(cell, text = '') {
 }
 
 function getCellText(cell) {
+    if (cell.tagName === 'TH') {
+        return cell.innerText;
+    }
     const wrapper = cell.querySelector('.cell-content-wrapper');
     return wrapper ? wrapper.innerText : '';
 }
 
 function setCellText(cell, text) {
+    if (cell.tagName === 'TH') {
+        cell.innerText = text;
+        return;
+    }
+    
     const wrapper = cell.querySelector('.cell-content-wrapper');
     if (wrapper) {
         wrapper.innerText = text;
@@ -320,16 +320,12 @@ function setCellText(cell, text) {
 }
 
 // ------------------------------------
-// 🚩 3. セル選択・編集関連 (イベント処理)
+// 🚩 3. セル選択・編集関連
 // ------------------------------------
 
 function selectCell(cell) {
-    // ヘッダー行のセルは選択対象から除外（色付けは可能にするため）
-    if (cell.closest('.header-row')) {
-        // ヘッダーセルは編集モードに入るか、色付けの対象になる
-        // 選択状態は通常のデータセルと区別する
-    }
-    
+    if (cell.tagName === 'TH') return; 
+
     if (cell.querySelector('input.cell-input')) return; 
 
     if (selectedCell) {
@@ -350,6 +346,11 @@ function applyColor(colorVariable) {
         return;
     }
     
+    if (selectedCell.tagName === 'TH') {
+        alert("項目名（ヘッダー）のセルには色を付けられません。データセルを選択してください。");
+        return;
+    }
+    
     const color = colorVariable ? getComputedStyle(document.documentElement).getPropertyValue(colorVariable.replace('var(', '').replace(')', '')) : '';
     
     selectedCell.style.backgroundColor = color;
@@ -362,6 +363,10 @@ function applyColor(colorVariable) {
 
 function makeEditable(cell) {
     if (cell.querySelector('input')) return; 
+    
+    if (cell.tagName === 'TH') {
+        return;
+    }
     
     if (selectedCell === cell) {
         cell.classList.remove('selected-cell');
@@ -380,11 +385,6 @@ function makeEditable(cell) {
         const parentCell = this.parentElement;
         setCellText(parentCell, newText);
         this.remove(); 
-        
-        // ヘッダーセルだった場合、contenteditableを復元
-        if (parentCell.closest('.header-row')) {
-             parentCell.setAttribute('contenteditable', 'true');
-        }
     };
 
     input.onkeydown = function(e) {
@@ -395,11 +395,6 @@ function makeEditable(cell) {
     
     const wrapper = cell.querySelector('.cell-content-wrapper');
     if(wrapper) wrapper.style.display = 'none';
-    
-    // ヘッダーセルだった場合、contenteditableを一時的に無効化
-    if (cell.closest('.header-row')) {
-        cell.removeAttribute('contenteditable');
-    }
 
     cell.appendChild(input);
     input.focus(); 
@@ -446,9 +441,9 @@ function addRow(tableId){
   const headCells = getTableHeadCells(tableId);
   const cols = headCells.length;
   
-  if (cols === 0) { alert("先に項目（ヘッダー）を追加してください。"); return; }
+  if (cols === 0) { alert("先に列（ヘッダー）を追加してください。"); return; }
 
-  const row = tbody.insertRow(-1); // 常に最後に追加
+  const row = tbody.insertRow();
   
   for(let i=0; i<cols; i++){ 
     const cell=row.insertCell(); 
@@ -461,18 +456,14 @@ function addRow(tableId){
 function deleteRow(tableId){
   const tbody = getTableBody(tableId);
   if (!tbody) return; 
-  
-  // ヘッダー行(rows[0])は削除しない
-  if(tbody.rows.length > 2) {
+
+  if(tbody.rows.length > 1) {
     tbody.deleteRow(-1);
-  } else if (tbody.rows.length === 2) {
-    // 項目行とデータ行が1行ずつの場合、データ行をクリア
-    Array.from(tbody.rows[1].cells).forEach(cell => {
+  } else if (tbody.rows.length === 1) {
+    Array.from(tbody.rows[0].cells).forEach(cell => {
         setCellText(cell, '');
         cell.style.backgroundColor = ''; 
     });
-  } else if (tbody.rows.length === 1) {
-      alert("項目行のみが残っています。データ行を増やす場合は「行追加」を押してください。");
   }
 }
 
@@ -481,55 +472,50 @@ function addColumn(tableId){
   let tbody = table.tBodies[0];
   if (!tbody) { tbody = table.createTBody(); }
   
-  // 項目行のセルを追加
-  const headerRow = getHeaderRow(tableId);
-  if (headerRow) {
-      const headerCell = headerRow.insertCell(); 
-      headerCell.setAttribute('contenteditable', 'true');
-      headerCell.onclick = function() { selectCell(this); }; 
-      headerCell.ondblclick = function() { makeEditable(this); }; 
-      wrapContent(headerCell, '新規項目');
+  let tHeadRow;
+  if (table.tHead && table.tHead.rows.length > 0) {
+      tHeadRow = table.tHead.rows[0];
+  } else {
+      if (!table.tHead) table.createTHead();
+      tHeadRow = table.tHead.insertRow();
   }
-
-  // データ行のセルを追加
-  // 項目行(rows[0])を除いてループ
-  for(let i=1; i<tbody.rows.length; i++){ 
-    const row = tbody.rows[i];
+  
+  // THを追加
+  const th = document.createElement('th'); 
+  th.innerText = `新規項目`;
+  th.contentEditable="true"; 
+  tHeadRow.appendChild(th);
+  
+  // データ行にTDを追加
+  for(let row of tbody.rows){ 
     const cell=row.insertCell(); 
     cell.onclick = function() { selectCell(this); }; 
     cell.ondblclick = function() { makeEditable(this); }; 
     wrapContent(cell);
   }
   
-  // 項目行しかない場合、データ行を自動で1行追加
-  if (tbody.rows.length === 1) {
+  if (tbody.rows.length === 0) {
       const row = tbody.insertRow();
-      for (let i = 0; i < getTableHeadCells(tableId).length; i++) {
-        const cell = row.insertCell(); 
-        cell.onclick = function() { selectCell(this); }; 
-        cell.ondblclick = function() { makeEditable(this); }; 
-        wrapContent(cell);
-      }
+      const cell = row.insertCell(); 
+      cell.onclick = function() { selectCell(this); }; 
+      cell.ondblclick = function() { makeEditable(this); }; 
+      wrapContent(cell);
   }
 }
 
 function deleteColumn(tableId){
   const table = document.getElementById(tableId);
   const tbody = table.tBodies[0];
-  const headCells = getTableHeadCells(tableId);
+  const ths = getTableHeadCells(tableId);
   
-  if(headCells.length > 1){ 
-    // 項目行から最後のセルを削除
-    const headerRow = getHeaderRow(tableId);
-    if (headerRow) {
-        headerRow.deleteCell(-1);
-    }
-    
-    // データ行から最後のセルを削除
+  if(ths.length > 1){ 
+    // THを削除
+    ths[ths.length - 1].remove(); 
     if (tbody) {
-        for(let i=1; i<tbody.rows.length; i++) { // 項目行(rows[0])を除いてループ
-          if (tbody.rows[i].cells.length > 0) {
-            tbody.rows[i].deleteCell(-1); 
+        // TDを削除
+        for(let row of tbody.rows) {
+          if (row.cells.length > 0) {
+            row.deleteCell(-1); 
           }
         }
     }
@@ -539,7 +525,7 @@ function deleteColumn(tableId){
 }
 
 // ------------------------------------
-// 5. データ操作関数 (saveData, resetAll)
+// 5. データ操作関数
 // ------------------------------------
 
 function resetAll(){
@@ -555,27 +541,30 @@ function resetAll(){
     ['active-companies-table','research-companies-table'].forEach(id => {
         const table = document.getElementById(id);
         
+        // THEADを初期化
+        let tHeadRow;
+        if (table.tHead && table.tHead.rows.length > 0) {
+            tHeadRow = table.tHead.rows[0];
+        } else {
+            if (!table.tHead) table.createTHead();
+            tHeadRow = table.tHead.insertRow();
+        }
+        tHeadRow.innerHTML = '';
+        defaultHeaders[id].forEach(headerText => {
+            const th = document.createElement('th');
+            th.contentEditable = "true";
+            th.innerText = headerText;
+            tHeadRow.appendChild(th);
+        });
+        
+        // TBODYを初期化
         let tbody = table.tBodies[0];
         if (!tbody) { tbody = table.createTBody(); }
         tbody.innerHTML = '';
-        
+        const row = tbody.insertRow();
         const headerCount = defaultHeaders[id].length;
-
-        // 1. 項目行を作成 (最初の行)
-        const headerRow = tbody.insertRow(0);
-        headerRow.classList.add('header-row');
-        defaultHeaders[id].forEach(headerText => {
-            const cell = headerRow.insertCell(); 
-            cell.setAttribute('contenteditable', 'true');
-            cell.onclick = function() { selectCell(this); }; 
-            cell.ondblclick = function() { makeEditable(this); }; 
-            wrapContent(cell, headerText); 
-        });
-        
-        // 2. 最初のデータ行を作成
-        const dataRow = tbody.insertRow(1);
         for (let i = 0; i < headerCount; i++) {
-            const cell = dataRow.insertCell(); 
+            const cell = row.insertCell(); 
             cell.onclick = function() { selectCell(this); }; 
             cell.ondblclick = function() { makeEditable(this); }; 
             wrapContent(cell); 
@@ -595,22 +584,20 @@ function saveData(){
     const table=document.getElementById(id);
     const rows=[];
     
+    // THからヘッダー情報を取得
+    const headerCells = Array.from(getTableHeadCells(id)).map(cell => getCellText(cell));
+    rows.push(headerCells);
+
     const tbody = table.tBodies[0];
     if (tbody) {
-        for(let i=0; i<tbody.rows.length; i++){
-          const row = tbody.rows[i];
+        for(let row of tbody.rows){
           const cells=[];
           const cellColors=[]; 
           for(let cell of row.cells) {
               cells.push(getCellText(cell)); 
               cellColors.push(cell.style.backgroundColor || ''); 
           }
-          // 最初の行はヘッダー（項目名）データとして扱う
-          if (i === 0) {
-              rows.push(cells);
-          } else {
-              rows.push({ data: cells, colors: cellColors }); 
-          }
+          rows.push({ data: cells, colors: cellColors }); 
         }
     }
     data['table'+(index+1)]=rows; 
@@ -638,28 +625,30 @@ window.onload=()=>{
     
     tableIds.forEach((id,index)=>{
       const table=document.getElementById(id);
+      
+      // THEADの再構築
+      if (!table.tHead) table.createTHead();
+      if (table.tHead.rows.length === 0) table.tHead.insertRow();
+      const tHeadRow=table.tHead.rows[0];
+      
       let tbody = table.tBodies[0];
       if (!tbody) { tbody = table.createTBody(); }
-      tbody.innerHTML = '';
       
       const allRows=data['table'+(index+1)]; 
-      if (!allRows || allRows.length === 0) return;
 
       const headerData = allRows[0] || [];
-      const dataRows = allRows.slice(1);
-      
-      // 1. 項目行を作成
-      const headerRow = tbody.insertRow(0);
-      headerRow.classList.add('header-row');
+      tHeadRow.innerHTML = '';
       headerData.forEach(val => {
-          const cell = headerRow.insertCell(); 
-          cell.setAttribute('contenteditable', 'true');
-          cell.onclick = function() { selectCell(this); }; 
-          cell.ondblclick = function() { makeEditable(this); }; 
-          setCellText(cell, val); 
+        const th = document.createElement('th');
+        th.contentEditable = "true";
+        th.innerText = val;
+        tHeadRow.appendChild(th);
       });
 
-      // 2. データ行を作成
+      const dataRows = allRows.slice(1);
+      tbody.innerHTML = '';
+      
+      // TBODYの再構築
       dataRows.forEach(rowDataObj => {
           const row = tbody.insertRow();
           rowDataObj.data.forEach((cellVal, i) => { 
@@ -675,8 +664,7 @@ window.onload=()=>{
           });
       });
 
-      // データ行が0行の場合、空のデータ行を1行追加
-      if (dataRows.length === 0 && headerData.length > 0) {
+      if (tbody.rows.length === 0 && headerData.length > 0) {
         const row = tbody.insertRow();
         headerData.forEach(() => { 
             const cell = row.insertCell(); 
@@ -688,18 +676,15 @@ window.onload=()=>{
     });
   }
 
-  // ★★★ 最終クリーンアップ処理: 全てのセルを再確認し、イベントとラッパーを確実に設定 ★★★
   document.querySelectorAll('tbody td').forEach(cell => {
-      // ロードしたセルにイベントを再設定
       cell.onclick = function() { selectCell(this); }; 
       cell.ondblclick = function() { makeEditable(this); };
-      // wrapContentを呼び出し、テキストが空でもラッパーの表示を強制
       wrapContent(cell, getCellText(cell)); 
   });
 }
 
 // ------------------------------------
-// 6. CSV操作関数 
+// 6. CSV操作関数
 // ------------------------------------
 function exportCSV(){
   let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
@@ -713,15 +698,12 @@ function exportCSV(){
         csv += '\n'; 
     }
 
-    // 項目行をヘッダーとして抽出
     const headerCells = Array.from(getTableHeadCells(tableId)).map(cell => getCellText(cell).replace(/"/g,'""'));
     csv+='"' + headerCells.join('","') + '"\n';
 
     const tbody = getTableBody(tableId);
     if (tbody) {
-        // 項目行(rows[0])を除いてループ
-        for(let i=1; i<tbody.rows.length; i++){
-          const row = tbody.rows[i];
+        for(let row of tbody.rows){
           let cells=[];
           for(let cell of row.cells) cells.push(getCellText(cell).replace(/"/g,'""'));
           csv+='"' + cells.join('","') + '"\n';
@@ -733,7 +715,7 @@ function exportCSV(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='job_search_memo.csv'; a.click();
 }
 
-// 7. CSVインポート関数 
+// 7. CSVインポート関数
 function importCSV(event){
   const file=event.target.files[0];
   if(!file) return;
@@ -772,38 +754,37 @@ function importCSV(event){
           lineIndex++;
       }
       
+      // THEADの再構築
+      if (!table.tHead) table.createTHead();
+      if (table.tHead.rows.length === 0) table.tHead.insertRow();
+      const tHeadRow = table.tHead.rows[0];
+      
       let tbody = table.tBodies[0];
       if (!tbody) { tbody = table.createTBody(); }
+      
       tbody.innerHTML = '';
+      tHeadRow.innerHTML = '';
       
       let headerCells = [];
       if(lineIndex < lines.length && lines[lineIndex]) {
           headerCells = decodeCSVLine(lines[lineIndex]);
+          headerCells.forEach(h => { 
+              const th = document.createElement('th');
+              th.contentEditable = "true";
+              th.innerText = h;
+              tHeadRow.appendChild(th);
+          });
           lineIndex++; 
       }
       
-      const expectedCols = headerCells.length;
+      const expectedCols = tHeadRow.cells.length;
 
-      // 1. 項目行を作成 (CSVのヘッダーをデータとして格納)
-      if (expectedCols > 0) {
-          const headerRow = tbody.insertRow(0);
-          headerRow.classList.add('header-row');
-          for (let i = 0; i < expectedCols; i++) {
-              const cell = headerRow.insertCell(); 
-              cell.setAttribute('contenteditable', 'true');
-              cell.onclick = function() { selectCell(this); }; 
-              cell.ondblclick = function() { makeEditable(this); }; 
-              setCellText(cell, headerCells[i] ? headerCells[i] : ''); 
-          }
-      }
-
-
-      // 2. データ行を作成
+      // TBODYの再構築
       while(lineIndex < lines.length && lines[lineIndex]){
         const rowCells = decodeCSVLine(lines[lineIndex]);
         
         if (rowCells.length === 1 && rowCells[0] !== "") {
-            break; 
+            break;
         }
         if (lines[lineIndex].trim() === '') {
             break;
@@ -819,17 +800,6 @@ function importCSV(event){
             setCellText(cell, cellVal); 
         }
         lineIndex++;
-      }
-      
-      // データ行が0行の場合、空のデータ行を1行追加 (項目行がある場合のみ)
-      if (tbody.rows.length === 1 && expectedCols > 0) {
-        const row = tbody.insertRow();
-        for (let i = 0; i < expectedCols; i++) {
-            const cell = row.insertCell(); 
-            cell.onclick = function() { selectCell(this); }; 
-            cell.ondblclick = function() { makeEditable(this); }; 
-            wrapContent(cell); 
-        }
       }
       
       lineIndex++; 
