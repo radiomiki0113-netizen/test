@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>就職活動メモ</title>
 <style>
-/* 🎨 デザインCSS - 安定版 */
+/* 🎨 デザインCSS - 最終安定版 */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
@@ -51,8 +51,9 @@ table {
   table-layout: fixed; 
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   background-color: white;
+  border: 1px solid var(--border-color); /* ★★★ 外枠線復活 ★★★ */
 }
-/* 元のTHのスタイル */
+
 th { 
   border: 1px solid var(--border-color);
   padding: 12px 15px; 
@@ -677,137 +678,4 @@ window.onload=()=>{
   }
 
   document.querySelectorAll('tbody td').forEach(cell => {
-      cell.onclick = function() { selectCell(this); }; 
-      cell.ondblclick = function() { makeEditable(this); };
-      wrapContent(cell, getCellText(cell)); 
-  });
-}
-
-// ------------------------------------
-// 6. CSV操作関数
-// ------------------------------------
-function exportCSV(){
-  let csv='"'+document.querySelector('h1').innerText.replace(/"/g,'""')+'"\n\n';
-  const h2s=document.querySelectorAll('h2');
-  
-  h2s.forEach((h,index)=>{
-    csv+='"'+h.innerText.replace(/"/g,'""')+'"\n';
-    const tableId = index === 0 ? 'active-companies-table' : 'research-companies-table';
-    
-    if (index === 1) {
-        csv += '\n'; 
-    }
-
-    const headerCells = Array.from(getTableHeadCells(tableId)).map(cell => getCellText(cell).replace(/"/g,'""'));
-    csv+='"' + headerCells.join('","') + '"\n';
-
-    const tbody = getTableBody(tableId);
-    if (tbody) {
-        for(let row of tbody.rows){
-          let cells=[];
-          for(let cell of row.cells) cells.push(getCellText(cell).replace(/"/g,'""'));
-          csv+='"' + cells.join('","') + '"\n';
-        }
-    }
-    csv+='\n';
-  });
-  const blob=new Blob(['\ufeff', csv],{type:'text/csv;charset=utf-8'}); 
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='job_search_memo.csv'; a.click();
-}
-
-// 7. CSVインポート関数
-function importCSV(event){
-  const file=event.target.files[0];
-  if(!file) return;
-  const reader=new FileReader();
-  
-  reader.onload=e=>{
-    const lines=e.target.result.replace(/\ufeff/g, "").split('\n').map(l=>l.trim()).filter(l=>l!=='');
-    if(lines.length<1) return;
-    
-    let tableIndex=-1, lineIndex=1; 
-    const h2s=document.querySelectorAll('h2');
-    const tableIds = ['active-companies-table', 'research-companies-table'];
-    
-    if (lines[0]) {
-        document.querySelector('h1').innerText = decodeCSVLine(lines[0])[0] || "就職活動メモ";
-        lineIndex++;
-    }
-
-    while (lineIndex < lines.length && lines[lineIndex].trim() === '') {
-        lineIndex++;
-    }
-
-    while(lineIndex < lines.length && tableIndex < 2){
-      tableIndex++;
-      const table = document.getElementById(tableIds[tableIndex]);
-
-      if(h2s[tableIndex] && lines[lineIndex]) {
-          const decodedLine = decodeCSVLine(lines[lineIndex]);
-          if (decodedLine.length === 1 && decodedLine[0] !== "") {
-              h2s[tableIndex].innerText = decodedLine[0];
-              lineIndex++; 
-          }
-      }
-      
-      while (lineIndex < lines.length && lines[lineIndex].trim() === '') {
-          lineIndex++;
-      }
-      
-      // THEADの再構築
-      if (!table.tHead) table.createTHead();
-      if (table.tHead.rows.length === 0) table.tHead.insertRow();
-      const tHeadRow = table.tHead.rows[0];
-      
-      let tbody = table.tBodies[0];
-      if (!tbody) { tbody = table.createTBody(); }
-      
-      tbody.innerHTML = '';
-      tHeadRow.innerHTML = '';
-      
-      let headerCells = [];
-      if(lineIndex < lines.length && lines[lineIndex]) {
-          headerCells = decodeCSVLine(lines[lineIndex]);
-          headerCells.forEach(h => { 
-              const th = document.createElement('th');
-              th.contentEditable = "true";
-              th.innerText = h;
-              tHeadRow.appendChild(th);
-          });
-          lineIndex++; 
-      }
-      
-      const expectedCols = tHeadRow.cells.length;
-
-      // TBODYの再構築
-      while(lineIndex < lines.length && lines[lineIndex]){
-        const rowCells = decodeCSVLine(lines[lineIndex]);
-        
-        if (rowCells.length === 1 && rowCells[0] !== "") {
-            break;
-        }
-        if (lines[lineIndex].trim() === '') {
-            break;
-        }
-
-        const row = tbody.insertRow();
-        for (let i = 0; i < expectedCols; i++) {
-            const cell = row.insertCell(); 
-            const cellVal = rowCells[i] ? rowCells[i] : ''; 
-            
-            cell.onclick = function() { selectCell(this); }; 
-            cell.ondblclick = function() { makeEditable(this); }; 
-            setCellText(cell, cellVal); 
-        }
-        lineIndex++;
-      }
-      
-      lineIndex++; 
-    }
-    alert("CSVファイルをインポートしました！");
-  };
-  reader.readAsText(file);
-}
-</script>
-</body>
-</html>
+      cell.onclick = function
